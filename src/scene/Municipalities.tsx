@@ -20,6 +20,9 @@ import { isSupportedMunicipality } from '../data/coverage'
 const OUTLINE_LIFT = 0.02
 /** How far above the top surface the hover label floats (scene units). */
 const LABEL_LIFT = 2.4
+/** Stable no-op raycast for inert (non-coverage) municipality meshes — a fresh
+ *  function each render would make R3F re-apply the prop every render. */
+const INERT_RAYCAST = () => null
 
 type Vec3 = [number, number, number]
 
@@ -154,9 +157,9 @@ function MunicipalityPiece({
           material={materials}
           castShadow
           receiveShadow
-          // unsupported pieces are invisible to the raycaster -> no cursor, no
-          // event, nothing behind them is blocked either.
-          raycast={interactive ? undefined : () => null}
+          // inert pieces are invisible to the raycaster (they also carry no
+          // pointer handlers) -> no hover, no cursor, no click.
+          raycast={interactive ? undefined : INERT_RAYCAST}
         />
       ))}
 
@@ -286,7 +289,13 @@ export function Municipalities({
           key={municipality.id}
           municipality={municipality}
           active={activeId === municipality.id}
-          interactive={interactive && isSupportedMunicipality(municipality.id)}
+          // Coverage gate ONLY — a stable value. It must NOT depend on the
+          // transient `interactive` flag (orbiting/zooming): OrbitControls fires
+          // its `start` event on pointer-down, which would tear the click
+          // handlers off a supported piece before pointer-up and the click would
+          // never reach `onSelect`. `interactive` still suppresses hover glow /
+          // label for everyone via `enter()` + `activeId` below.
+          interactive={isSupportedMunicipality(municipality.id)}
           onEnter={enter}
           onLeave={leave}
           onDown={handleDown}
