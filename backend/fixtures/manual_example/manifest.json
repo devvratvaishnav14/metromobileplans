@@ -1,0 +1,59 @@
+{
+  "provider": {
+    "slug": "example-mobile",
+    "display_name": "Example Mobile (schema demo)",
+    "network": "Bell",
+    "plan_model": "postpaid",
+    "homepage_url": "https://example.test/"
+  },
+  "source": {
+    "url": "https://example.test/plans",
+    "kind": "capture",
+    "description": "Schema-demo manual-import fixture. Not a real carrier."
+  },
+  "plans": [
+    {
+      "external_id": "EX-45-30GB",
+      "plan_name": "Example 30GB 5G",
+      "price_cad": 45,
+      "monthly_price_cad": 45,
+      "regular_price_cad": 45,
+      "price_period": "monthly",
+      "data_total_gb": 30,
+      "data_unlimited": false,
+      "network_speed_tier": "5G",
+      "has_5g": true,
+      "plan_type": "postpaid",
+      "canada_wide_calling": true,
+      "unlimited_text": true,
+      "availability": "online",
+      "autopay_required": true,
+      "conditions": "Autopay required for this price",
+      "operator_note": "read from the plan grid on 2026-09-03"
+    },
+    {
+      "external_id": "EX-60-60GB",
+      "plan_name": "Example 60GB 5G+",
+      "price_cad": 60,
+      "monthly_price_cad": 60,
+      "price_period": "monthly",
+      "data_total_gb": 60,
+      "data_unlimited": false,
+      "network_speed_tier": "5G+",
+      "has_5g": true,
+      "plan_type": "postpaid",
+      "canada_wide_calling": true,
+      "unlimited_text": true,
+      "availability": "online"
+    },
+    {
+      "external_id": "EX-DATA-ADDON",
+      "plan_name": "Example Data Add-on",
+      "price_cad": 15,
+      "monthly_price_cad": 15,
+      "price_period": "monthly",
+      "plan_type": "postpaid",
+      "availability": "online"
+    }
+  ]
+}

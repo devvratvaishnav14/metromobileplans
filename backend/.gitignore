@@ -1,0 +1,22 @@
+# Local dev database, virtualenv, caches — never deployed
+.venv/
+*.db
+*.db-journal
+*.db.pre*
+*.db.pre[0-9]
+*.sqlite3
+raw_store/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+.env
+
+# Operator working files: saved carrier pages + filled manifests.
+# The CAPTURE.md guides and manifest.template.jsonc ARE committed.
+imports/*/captures/*
+!imports/*/captures/.gitkeep
+
+# Stray local exploration file
+fizz_byop2.html

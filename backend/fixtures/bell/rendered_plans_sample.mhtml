@@ -1,0 +1,126 @@
+From: <Saved by Blink>
+Snapshot-Content-Location: https://www.bell.ca/Mobility/Bring-Your-Own-Phone/Mobility_only.tab
+Subject: Bring Your Own Phone | Bell Mobility
+Date: Wed, 9 Sep 2026 12:00:00 -0700
+MIME-Version: 1.0
+Content-Type: multipart/related; type="text/html"; boundary="----B--abc"
+
+------B--abc
+Content-Type: text/html
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://www.bell.ca/Mobility/Bring-Your-Own-Phone/Mobility_only.tab
+
+<!doctype html>
+<!-- SYNTHETIC Bell-style rendered plan grid for the draft-manifest extract=
+or
+     test. Mirrors the real Bell "Mobility only" tab DOM: each card has a
+     .g-card-plan__price block with a .big-price (what you pay), a struck-t=
+hrough
+     <s> regular price, and a .g-card-plan__caption naming the credits.
+     NOT real Bell pricing. -->
+<html lang=3D"en">
+  <head><title>Bring Your Own Phone | Bell Mobility</title></head>
+  <body>
+    <header><nav>Bell Mobility &mdash; British Columbia</nav></header>
+    <main>
+      <div class=3D"rateplan-tabs-controller">
+        <h3>Rate plans</h3>
+        <ul class=3D"nav nav-pills">
+          <li><a class=3D"nav-link" href=3D"/With_Streaming.tab">With Strea=
+ming</a></li>
+          <li><a class=3D"nav-link active" href=3D"/Mobility_only.tab">Mobi=
+lity only</a></li>
+        </ul>
+        <p>New customers save $10/mo. on their first line. footnote 2</p>
+      </div>
+
+      <div class=3D"card-plan g-card-plan">
+        <h3>Select - 60 GB</h3>
+        <p>5G/5G+ network access footnote 3</p>
+        <p>60 GB of data at up to 2 Gbps footnote 4, unlimited data at up t=
+o 512 Kbps thereafter footnote 5</p>
+        <p>Unlimited calling, texting and data in Canada footnote 6</p>
+        <p>SD video streaming footnote 7</p>
+        <p>Hotspot capabilities footnote 8</p>
+        <div class=3D"g-card-plan__price same-height">
+          <div class=3D"flex align-items-end justify-content-between">
+            <div class=3D"big-price priceText"><span>$</span><span>65</span=
+><span>/mo.</span> <span class=3D"sr-only">65 dollars per month.</span> <su=
+p class=3D"legaltext">footnote 9</sup></div>
+            <p class=3D"txtRight margin-b-0 txtSize12 rsx-price-brs-current=
+"><s>$ 75 /mo.</s></p>
+          </div>
+          <div class=3D"g-card-plan__caption same-height">Price includes Au=
+topay credit and promotional credit. <sup class=3D"legaltext">footnote 10</=
+sup></div>
+          <div class=3D"flex align-items-end justify-content-between">
+            <div class=3D"big-price priceText"><span>$</span><span>57</span=
+><span>.50 /mo.</span></div>
+            <p class=3D"rsx-price-brs-current"><s>$ 75 /mo.</s></p>
+          </div>
+          <div class=3D"g-card-plan__caption same-height"><span class=3D"tx=
+tBold">Average price per line for 2 lines</span> Price includes Autopay cre=
+dit and promotional credit.</div>
+        </div>
+      </div>
+
+      <div class=3D"card-plan g-card-plan">
+        <h3>Select - 100 GB</h3>
+        <p>with U.S. roaming</p>
+        <p>5G/5G+ network access footnote 3</p>
+        <p>100 GB of data at up to 2 Gbps footnote 4, unlimited data at up =
+to 512 Kbps thereafter footnote 5</p>
+        <p>Unlimited calling, texting and data in Canada and in the U.S. fo=
+otnote 10</p>
+        <p>5 GB/day of data roaming in the U.S., unlimited data at up to 51=
+2 Kbps thereafter footnote 5</p>
+        <p>Hotspot capabilities footnote 8</p>
+        <div class=3D"g-card-plan__price same-height">
+          <div class=3D"flex align-items-end justify-content-between">
+            <div class=3D"big-price priceText"><span>$</span><span>70</span=
+><span>/mo.</span> <sup class=3D"legaltext">footnote 9</sup></div>
+            <p class=3D"rsx-price-brs-current"><s>$ 80 /mo.</s></p>
+          </div>
+          <div class=3D"g-card-plan__caption same-height">Price includes Au=
+topay credit and promotional credit. <sup class=3D"legaltext">footnote 10</=
+sup></div>
+        </div>
+      </div>
+
+      <div class=3D"card-plan g-card-plan">
+        <p>PRICE GUARANTEED FOR 5 YEARS*</p>
+        <h3>Ultra - Unlimited</h3>
+        <p>with U.S./Mexico roaming</p>
+        <p>5G/5G+ network access footnote 3</p>
+        <p>Unlimited data at our fastest available 5G+ speeds, up to 2 Gbps=
+ footnote 11</p>
+        <p>Unlimited calling, texting and data in Canada, the U.S. and Mexi=
+co footnote 12</p>
+        <p>5 GB/day of data roaming in the U.S. and Mexico, unlimited data =
+at up to 512 Kbps thereafter footnote 5</p>
+        <p>Unlimited minutes for calls from Canada to 27 countries footnote=
+ 13</p>
+        <p>HD video streaming footnote 14</p>
+        <p>Hotspot capabilities footnote 8 (50 GB/mo. at up to 2 Gbps, unli=
+mited data at up to 512 Kbps thereafter footnote 5)</p>
+        <div class=3D"g-card-plan__price same-height">
+          <div class=3D"flex align-items-end justify-content-between">
+            <div class=3D"big-price priceText"><span>$</span><span>85</span=
+><span>/mo.</span> <sup class=3D"legaltext">footnote 9</sup></div>
+            <p class=3D"rsx-price-brs-current"><s>$ 95 /mo.</s></p>
+          </div>
+          <div class=3D"g-card-plan__caption same-height">Price includes Au=
+topay credit and promotional credit. <sup class=3D"legaltext">footnote 10</=
+sup></div>
+        </div>
+      </div>
+
+      <aside class=3D"multiline-promo">
+        <p>Save up to $35/mo. on additional lines when you bring your own p=
+hone.</p>
+      </aside>
+    </main>
+  </body>
+</html>
+
+------B--abc--

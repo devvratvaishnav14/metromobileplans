@@ -1,0 +1,53 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+
+# Python backend local state — never deployed
+backend/.venv/
+backend/*.db
+backend/*.db-*
+backend/*.db.pre*
+backend/*.sqlite3
+backend/raw_store/
+backend/.pytest_cache/
+backend/*.egg-info/
+backend/**/*.egg-info/
+__pycache__/
+*.pyc
+
+# Operator working files: raw carrier captures + drafted manifests live under
+# backend/imports/*/captures/ and are NOT committed. The reviewed dataset
+# (backend/fixtures/**, incl. test .html/.mhtml/.json) and the manifest
+# templates ARE committed and are what a fresh deploy bootstraps from.
+backend/imports/*/captures/*
+!backend/imports/*/captures/.gitkeep
+
+# Stray local exploration file (Fizz is not a V1 provider)
+backend/fizz_byop2.html
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Abandoned work, kept locally, never deployed
+archive

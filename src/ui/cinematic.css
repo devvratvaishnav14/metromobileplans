@@ -1,0 +1,156 @@
+/* --------------------------------------------------------------------------
+   Cinematic map -> analysis transition. A bright wash grows from the selected
+   municipality to cover the swap, then clears to reveal the analysis view.
+   Purely decorative; never captures pointer events.
+   -------------------------------------------------------------------------- */
+
+.cine {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.cine__wash {
+  position: absolute;
+  left: var(--fx, 50%);
+  top: var(--fy, 50%);
+  width: 300vmax;
+  height: 300vmax;
+  margin-left: -150vmax;
+  margin-top: -150vmax;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 246, 224, 0.96) 22%,
+    rgba(255, 213, 150, 0.55) 42%,
+    rgba(120, 200, 255, 0.18) 62%,
+    rgba(120, 200, 255, 0) 78%
+  );
+  opacity: 0;
+  transform: scale(0.04);
+  will-change: transform, opacity;
+}
+
+.cine__streaks {
+  position: absolute;
+  left: var(--fx, 50%);
+  top: var(--fy, 50%);
+  width: 260vmax;
+  height: 260vmax;
+  margin-left: -130vmax;
+  margin-top: -130vmax;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0) 0deg,
+    rgba(255, 255, 255, 0.16) 3deg,
+    rgba(255, 255, 255, 0) 7deg
+  );
+  opacity: 0;
+  transform: scale(0.1) rotate(0deg);
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+/* -------- stage IN: rush + bloom, hold covered ---------------------------- */
+.cine--in .cine__wash {
+  animation: cine-wash-in 620ms cubic-bezier(0.5, 0, 0.75, 0.2) forwards;
+}
+.cine--in .cine__streaks {
+  animation: cine-streaks-in 620ms cubic-bezier(0.4, 0, 0.9, 0.3) forwards;
+}
+
+/* -------- stage OUT: clear to reveal the analysis view --------------- */
+.cine--out .cine__wash {
+  animation: cine-wash-out 640ms cubic-bezier(0.3, 0.1, 0.3, 1) forwards;
+}
+.cine--out .cine__streaks {
+  animation: cine-streaks-out 420ms ease-out forwards;
+}
+
+@keyframes cine-wash-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.04);
+  }
+  45% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes cine-streaks-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.1) rotate(0deg);
+  }
+  55% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3) rotate(38deg);
+  }
+}
+
+@keyframes cine-wash-out {
+  0% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes cine-streaks-out {
+  0% {
+    opacity: 0.28;
+    transform: scale(1.3) rotate(38deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55) rotate(58deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cine__wash {
+    transform: none;
+    margin: 0;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+  .cine--in .cine__wash {
+    animation: cine-fade-in 260ms ease forwards;
+  }
+  .cine--out .cine__wash {
+    animation: cine-fade-out 320ms ease forwards;
+  }
+  .cine__streaks {
+    display: none;
+  }
+  @keyframes cine-fade-in {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes cine-fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+}

@@ -1,0 +1,102 @@
+// Freedom Mobile -- official_manual import manifest
+// Fill one plan object per plan visible on the page. See CAPTURE.md in this folder
+// for the URL, the region/toggle steps, and Freedom Mobile-specific pitfalls.
+// Rules: set a field ONLY if the official page clearly states it; otherwise leave null.
+//        Do NOT use WhistleOut or any other third-party site to fill gaps.
+{
+  "provider": {
+    "slug": "freedom-mobile",
+    "display_name": "Freedom Mobile",
+    "network": "Freedom (Videotron/Quebecor)",
+    "plan_model": "mixed",
+    "homepage_url": "https://www.freedommobile.ca/"
+  },
+  "source": {
+    "url": "https://www.freedommobile.ca/en-CA/plans",
+    "kind": "capture",
+    "description": "Freedom Mobile official plans page, captured by an operator for British Columbia."
+  },
+  "plans": [
+    {
+      // ---- identity (required) --------------------------------------------
+      "external_id": "REPLACE-me-stable-id",   // you assign this; keep it stable across re-verifies, e.g. "PROV-unlimited-100gb"
+      "plan_name": "REPLACE exact plan name as shown",
+      "plan_type": null,                       // "postpaid" | "prepaid" -- only if the page makes it clear
+
+      // ---- price: keep CURRENT vs REGULAR vs PROMO separate ---------------
+      "price_period": "monthly",               // "monthly" | "annual"
+      "monthly_price_cad": null,               // the price a customer pays now (the headline $/mo)
+      "regular_price_cad": null,               // price after any promo / without the intro discount, IF the page shows it
+      "promo_price_cad": null,                 // set ONLY if a promotional price is shown AND it is lower than regular
+      "promo_name": null,                      // e.g. "Limited-time offer", "Black Friday"
+      "promo_savings_cad": null,               // stated savings, if the page gives a number
+      "promo_ends_at": null,                   // "2026-10-31T00:00:00Z" -- ONLY if a real end date is shown
+      "promo_expiry_known": null,              // true = real end date; false = "limited time" with NO date; null = not mentioned
+      "promo_duration_months": null,           // e.g. 12 for "$X/mo for the first 12 months"
+      "promo_new_customers_only": null,        // true/false if stated
+      "promo_online_only": null,               // true/false if stated
+      "promo_autopay_required": null,          // true if the promo price needs autopay specifically
+
+      // ---- autopay / fees / contract ------------------------------------
+      "autopay_required": null,                // true if the headline price REQUIRES automatic payments
+      "autopay_note": null,                    // e.g. "$5/mo Digital Discount with AutoPay + eBill"
+      "activation_fee_cad": null,              // connection/activation fee, IF shown on this page
+      "activation_fee_waived": null,           // true only if the page explicitly says "no activation fee"
+      "contract_required": null,               // true/false -- BYOD plans are usually no-contract
+      "contract_length_months": null,          // e.g. 24, only if a term is required
+
+      // ---- device ------------------------------------------------------
+      "byod": true,                            // this manifest is for bring-your-own-phone pricing
+      "byod_required": null,                   // true only if the plan is BYOD-only (no financing option)
+      "device_restrictions": null,
+
+      // ---- data ------------------------------------------------------
+      "data_total_gb": null,                   // total high-speed allowance in GB (domestic)
+      "data_full_speed_gb": null,              // GB at full speed before any throttle (often == data_total_gb)
+      "data_bonus_gb": null,                   // permanent bonus data (e.g. autopay bonus)
+      "data_promo_gb": null,                   // temporary promotional bonus data
+      "data_unlimited": null,                  // true if you can KEEP using data past the cap (even if slowed)
+      "data_unlimited_is_full_speed": null,    // false for the usual "X GB then reduced speed" model
+      "data_hard_cap": null,                   // true if data STOPS entirely at the cap
+      "throttle_speed": null,                  // e.g. "512 Kbps" if the reduced speed is stated
+      "overage_note": null,                    // e.g. "no overage fees" or "$X/GB"
+      "data_rollover": null,
+
+      // ---- network ---------------------------------------------------
+      "network_technology": null,              // "5G+" | "5G" | "4G LTE" | "4G"
+      "max_download_mbps": null,               // only if a speed cap number is stated
+      "has_5g": null,
+
+      // ---- calling / messaging / travel ---------------------------
+      "canada_wide_calling": null,             // true if unlimited Canada-wide talk
+      "unlimited_text": null,
+      "international_text": null,
+      "includes_us": null,                     // true ONLY if the plan includes real US usage (calls/data), not just US texting
+      "includes_mexico": null,
+      "us_mex_data_gb": null,                  // shared Can/US/Mex data amount, if separate
+      "international_roaming": null,            // true if roaming beyond Can/US/Mex is included or bundled
+      "international_roaming_note": null,
+      "can_us_mex_note": null,
+
+      // ---- features ------------------------------------------------
+      "hotspot": null,
+      "hotspot_data_gb": null,                 // only if hotspot has its own separate allowance
+      "esim": null,
+      "wifi_calling": null,
+
+      // ---- student ----------------------------------------------
+      "student_plan": null,                    // true only if this plan is specifically a student plan
+      "student_offer": null,                   // true if a student-specific discount/offer applies to this plan
+      "student_eligibility_note": null,        // the verified eligibility conditions, if any
+
+      // ---- geography (only if the page states a restriction) ----
+      "available_regions": null,               // e.g. ["BC"] -- leave null if sold nationally / not stated
+      "geo_availability_note": null,
+
+      // ---- catch-all -------------------------------------------
+      "conditions": null,                      // any other material condition, short
+      "availability": "online"                 // "online" | "in-store" | "online, in-store"
+    }
+    // , { ...next plan... }
+  ]
+}
