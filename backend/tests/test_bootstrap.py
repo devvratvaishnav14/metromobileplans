@@ -83,6 +83,39 @@ def test_bootstrap_is_idempotent(session):
     assert len(first) == len(second)  # upserts, no duplicates
 
 
+def test_bootstrap_repairs_a_partially_populated_database(session):
+    """A failed earlier deploy left only Bell + Koodo + Chatr. Re-running the
+    imports must add the missing Freedom provider and reach 26 / 24 without
+    disturbing or duplicating the plans already there."""
+    now = dt.datetime(2026, 9, 10, 12, 0, tzinfo=dt.timezone.utc)
+
+    # partial state: everything except Freedom
+    for slug in ("bell", "koodo"):
+        block = DATASET[slug]
+        run_manual_import(
+            session,
+            manifest={"provider": block["provider"], "source": block["source"], "plans": block["plans"]},
+            capture_path=EVIDENCE, operator="V1 approved snapshot (2026-09-09)",
+            verified_at=VERIFIED_AT, source_mode="official_manual",
+        )
+    run_refresh("chatr", session, fixture_path=CHATR_SNAPSHOT)
+
+    partial = session.scalars(select(Plan)).all()
+    assert not any(p.provider_slug == "freedom-mobile" for p in partial)
+    bell_ids_before = {p.external_id for p in partial if p.provider_slug == "bell"}
+
+    # reconcile: run every import again (idempotent for the present providers)
+    _bootstrap(session, now)
+
+    official = session.scalars(
+        select(Plan).where(Plan.source_mode != "trusted_secondary")
+    ).all()
+    assert sum(1 for p in official if p.verification_status == "verified") == 26
+    assert sum(1 for p in official if p.is_rankable) == 24
+    assert {p.external_id for p in official if p.provider_slug == "bell"} == bell_ids_before
+    assert sum(1 for p in official if p.provider_slug == "freedom-mobile") == 7
+
+
 def test_bootstrapped_database_gives_the_frozen_best_overall_top5(session):
     now = dt.datetime(2026, 9, 10, 12, 0, tzinfo=dt.timezone.utc)
     _bootstrap(session, now)

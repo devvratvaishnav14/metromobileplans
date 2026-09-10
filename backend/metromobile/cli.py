@@ -70,43 +70,46 @@ _EXPECTED_RANKABLE = 24
 @app.command()
 def bootstrap(
     force: bool = typer.Option(
-        False, help="re-run the imports even if plans already exist (idempotent upserts)"
+        False, help="re-import every provider even if it's already complete"
     ),
     live_chatr: bool = typer.Option(
-        False, help="fetch Chatr live instead of from the reviewed snapshot"
+        False, help="also fetch Chatr live instead of only from the reviewed snapshot"
     ),
 ) -> None:
-    """One-time production bootstrap: reproduce the approved V1 official dataset
-    on a fresh database through the normal verified import pipeline.
+    """Reconcile the database to the approved V1 official dataset, through the
+    normal verified import pipeline.
 
     Bell / Koodo / Freedom  -> official_manual import of the reviewed V1 dataset
-    Chatr                    -> official_automated refresh (reviewed snapshot by
-                                default; the scheduled job keeps it live after)
+    Chatr                    -> official_automated refresh of the reviewed snapshot
+                                (only if Chatr is missing; the scheduled/deploy
+                                refresh keeps it live)
 
-    Safe to re-run: every write upserts on (provider, external_id). Never drops
-    or resets anything. Exits non-zero if the resulting counts don't match the
-    frozen expectation, so a bad deploy fails loudly instead of drifting.
+    Repairs a partially-populated database: each provider is imported only if it
+    is missing or short, so a failed earlier deploy is healed on the next one.
+    Every write upserts on (provider, external_id) and preserves
+    verification / provenance / eligibility restrictions. Never drops or resets
+    anything. Exits non-zero if the final official counts don't match the frozen
+    expectation.
     """
     if not _V1_DATASET.exists():
         console.print(f"[red]missing {_V1_DATASET}[/] — cannot bootstrap")
         raise typer.Exit(1)
 
-    with SessionLocal() as session:
-        existing = session.scalar(select(func.count(Plan.id))) or 0
-    if existing and not force:
-        console.print(
-            f"[yellow]database already has {existing} plan(s)[/] — skipping bootstrap "
-            "(pass --force to re-run the idempotent imports)."
-        )
-        with SessionLocal() as session:
-            _report_official_counts(session)
-        raise typer.Exit(0)
-
     dataset = json.loads(_V1_DATASET.read_text())
 
     # One fresh session per step. run_manual_import / run_refresh each commit;
-    # if one fails mid-flush its session is rolled back and never reused.
+    # a failure rolls its own session back and is never reused.
     for slug in _V1_MANUAL_PROVIDERS:
+        want = len(dataset[slug]["plans"])
+        with SessionLocal() as session:
+            have = session.scalar(
+                select(func.count(Plan.id)).where(Plan.provider_slug == slug)
+            ) or 0
+        if have >= want and not force:
+            console.print(f"[dim]{slug}: {have}/{want} plans present — ok[/]")
+            continue
+
+        console.print(f"[cyan]{slug}: reconciling ({have}/{want} present)[/]")
         block = dataset[slug]
         manifest = {
             "provider": block["provider"],
@@ -122,7 +125,7 @@ def bootstrap(
                     operator="V1 approved snapshot (2026-09-09)",
                     verified_at=_V1_VERIFIED_AT,
                     source_mode="official_manual",
-                    note="production bootstrap from the reviewed V1 dataset",
+                    note="V1 bootstrap / reconciliation from the reviewed dataset",
                 )
             except Exception as exc:  # noqa: BLE001 - surface + roll back, don't leave a poisoned txn
                 session.rollback()
@@ -132,24 +135,31 @@ def bootstrap(
         if outcome.status not in ("success", "partial"):
             raise typer.Exit(1)
 
-    chatr_fixture = None if live_chatr else _CHATR_SNAPSHOT
     with SessionLocal() as session:
-        try:
-            chatr_outcome = run_refresh("chatr", session, fixture_path=chatr_fixture)
-        except Exception as exc:  # noqa: BLE001
-            session.rollback()
-            console.print(f"[red]chatr: refresh failed[/] — {type(exc).__name__}: {exc}")
-            raise typer.Exit(1) from exc
-    _print_outcome("chatr", chatr_outcome)
-    if chatr_outcome.status not in ("success", "partial"):
-        raise typer.Exit(1)
+        chatr_have = session.scalar(
+            select(func.count(Plan.id)).where(Plan.provider_slug == "chatr")
+        ) or 0
+    if chatr_have == 0 or live_chatr or force:
+        chatr_fixture = None if live_chatr else _CHATR_SNAPSHOT
+        with SessionLocal() as session:
+            try:
+                chatr_outcome = run_refresh("chatr", session, fixture_path=chatr_fixture)
+            except Exception as exc:  # noqa: BLE001
+                session.rollback()
+                console.print(f"[red]chatr: refresh failed[/] — {type(exc).__name__}: {exc}")
+                raise typer.Exit(1) from exc
+        _print_outcome("chatr", chatr_outcome)
+        if chatr_outcome.status not in ("success", "partial"):
+            raise typer.Exit(1)
+    else:
+        console.print(f"[dim]chatr: {chatr_have} plans present — ok (deploy refresh keeps it live)[/]")
 
     with SessionLocal() as session:
         verified, rankable = _report_official_counts(session)
 
-    if not live_chatr and (verified != _EXPECTED_VERIFIED or rankable != _EXPECTED_RANKABLE):
+    if verified != _EXPECTED_VERIFIED or rankable != _EXPECTED_RANKABLE:
         console.print(
-            f"[red]count drift[/]: expected {_EXPECTED_VERIFIED} verified / "
+            f"[red]count mismatch[/]: expected {_EXPECTED_VERIFIED} verified / "
             f"{_EXPECTED_RANKABLE} rankable official plans, got {verified} / {rankable}. "
             "Investigate before serving."
         )
