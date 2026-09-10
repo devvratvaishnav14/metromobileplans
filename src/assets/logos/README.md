@@ -1,18 +1,22 @@
-# Provider marks
+# Provider logos (drop-in)
 
-Small, original identifier badges — a single letter in an approximate brand
-colour on a rounded square — one per V1 plan provider. They are **not** the
-carriers' official logo artwork (that is trademarked/copyrighted and cannot be
-redistributed here); they exist only to help a reader tell the four sub-brands
-apart at a glance, alongside the provider name in plain text.
+Put each carrier's **official** logo here, named by provider slug:
 
-Rendered ~28px tall beside the provider name on each ranked plan card. The
-results page carries a disclaimer that this is an independent comparison, not
-affiliated with or endorsed by any carrier.
+| file | provider |
+|---|---|
+| `chatr.svg` (or `.png` / `.webp`) | Chatr |
+| `bell.svg` | Bell |
+| `koodo.svg` | Koodo |
+| `freedom-mobile.svg` | Freedom Mobile |
 
-| file | provider | underlying network |
-|---|---|---|
-| `chatr.svg` | Chatr | Rogers |
-| `bell.svg` | Bell | Bell |
-| `koodo.svg` | Koodo | TELUS |
-| `freedom-mobile.svg` | Freedom Mobile | Freedom (Videotron) |
+`src/analysis/providers.ts` loads whatever is present via `import.meta.glob`,
+so no code change is needed. If a file is missing, that card just shows the
+provider name + network text with no image.
+
+Source each file from the carrier's own site or official brand/press kit.
+Do not trace, redraw, or recreate a logo. The results page carries a
+disclaimer that this is an independent comparison, not affiliated with or
+endorsed by any carrier.
+
+Recommended: an SVG (or a transparent PNG at ~2× the ~32px display height).
+Keep the intrinsic aspect ratio; the UI constrains height, not width.

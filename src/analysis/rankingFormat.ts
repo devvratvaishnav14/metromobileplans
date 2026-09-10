@@ -9,11 +9,6 @@ export function money(n: number): string {
   return `$${Number.isInteger(n) ? n : n.toFixed(2)}`
 }
 
-/** One decimal, the way a score reads best: 75.6, not 75.63 or 76. */
-export function scoreText(n: number): string {
-  return n.toFixed(1)
-}
-
 function gb(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1)
 }

@@ -54,7 +54,7 @@ function MapExperience() {
 
       {!showTransition && (
         <Overlay
-          journeyStarted={flow.destinationId !== null || flow.comingSoon !== null}
+          journeyStarted={flow.destinationId !== null}
           confirmation={
             flow.pendingName && flow.destinationId
               ? {
@@ -62,15 +62,6 @@ function MapExperience() {
                   placeName: flow.pendingName,
                   onConfirm: flow.confirm,
                   onReject: flow.reject,
-                }
-              : null
-          }
-          comingSoon={
-            flow.comingSoon
-              ? {
-                  instanceKey: flow.comingSoon.id,
-                  placeName: flow.comingSoon.name,
-                  onDismiss: flow.dismissComingSoon,
                 }
               : null
           }

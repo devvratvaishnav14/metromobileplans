@@ -135,23 +135,13 @@ def build_meta(session: Session, municipality: str | None, now: dt.datetime) -> 
         mode_counts[p.source_mode] = mode_counts.get(p.source_mode, 0) + 1
 
     notes = [
-        "Development dataset — this is not a ranked Top 15 or a 'best plans' list. "
-        "There is no ranking engine yet.",
-        "The selected location does not change plan ordering or eligibility yet. "
-        "Ordering is by current price only; no municipality-specific inputs are used.",
-        "Plan data is fetched/verified on a schedule, not live. Each plan shows how "
-        "recently it was verified and by which source mode.",
-        "Promotional and regular pricing are stored separately; an expired promotion "
-        "is never shown as a current offer.",
+        "Plans come from official carrier sources and are re-verified on a "
+        "schedule, not in real time. Each plan shows when it was last verified.",
+        "The selected municipality does not change plan ordering or eligibility. "
+        "There is no area-specific network scoring.",
+        "Regular and conditional (AutoPay / bundle / promotional) prices are "
+        "stored separately; an expired promotion is never shown as a current offer.",
     ]
-    if mode_counts.get("trusted_secondary"):
-        notes.append(
-            "Trusted-secondary records (from third-party aggregators) are shown for "
-            "reference only — never marked Verified and never ranking-eligible without "
-            "an official cross-check."
-        )
-    if mode_counts.get("official_automated", 0) + mode_counts.get("official_manual", 0) == 0:
-        notes.append("No officially verified plans are connected yet.")
 
     return MetaOut(
         municipality=municipality,

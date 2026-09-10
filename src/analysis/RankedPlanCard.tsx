@@ -1,13 +1,13 @@
 import { useId, useState } from 'react'
 import type { RankedPlan, RankingPreset } from '../api/types'
 import { providerBrand } from './providers'
+import { useCountUp } from './useCountUp'
 import {
   componentRows,
   offerSummary,
   planFactRows,
   priceDisplay,
   roamingScopeLabel,
-  scoreText,
   shortDataLabel,
 } from './rankingFormat'
 
@@ -20,6 +20,12 @@ const SOURCE_LABEL: Record<string, string> = {
   official_automated: 'Official carrier source',
   official_manual: 'Official carrier source, checked by hand',
   trusted_secondary: 'Third-party source',
+}
+
+const MEDAL: Record<number, string> = { 1: ' rank-card--gold', 2: ' rank-card--silver', 3: ' rank-card--bronze' }
+
+function isHttpUrl(u: string | null | undefined): u is string {
+  return !!u && /^https?:\/\//i.test(u)
 }
 
 function ScoreBar({ score }: { score: number | null }) {
@@ -49,9 +55,10 @@ export function RankedPlanCard({ ranked, preset }: Props) {
   const offer = preset === 'offers' ? offerSummary(ranked) : null
   const reason = ranked.reasons.join(' · ')
   const someUnscored = componentRows(ranked).some((row) => row.score == null)
+  const shownScore = useCountUp(ranked.final_score)
 
   return (
-    <article className="rank-card">
+    <article className={`rank-card${MEDAL[ranked.rank] ?? ''}`}>
       <div className="rank-card__head">
         <div className="rank-card__rank" aria-label={`Rank ${ranked.rank}`}>
           <span className="rank-card__rank-hash">#</span>
@@ -60,13 +67,11 @@ export function RankedPlanCard({ ranked, preset }: Props) {
 
         <div className="rank-card__identity">
           <div className="rank-card__brand">
-            {brand?.mark && (
+            {brand?.logo && (
               <img
                 className="rank-card__logo"
-                src={brand.mark}
-                alt=""
-                width={28}
-                height={28}
+                src={brand.logo}
+                alt={`${brand.name} logo`}
                 loading="lazy"
                 decoding="async"
               />
@@ -136,12 +141,17 @@ export function RankedPlanCard({ ranked, preset }: Props) {
         </div>
       )}
 
-      {reason && <p className="rank-card__reason">{reason}</p>}
+      {reason && (
+        <div className="rank-card__reason">
+          <span className="rank-card__reason-label">Why this ranks here</span>
+          <p className="rank-card__reason-text">{reason}</p>
+        </div>
+      )}
 
       <div className="rank-card__score">
         <div className="rank-card__score-num">
           <span className="rank-card__score-label">Overall score</span>
-          <span className="rank-card__score-value">{scoreText(ranked.final_score)}</span>
+          <span className="rank-card__score-value">{shownScore.toFixed(1)}</span>
         </div>
         <span className="rank-card__score-src">
           Calculated from verified plan data — based on price, data, technology,
@@ -156,7 +166,7 @@ export function RankedPlanCard({ ranked, preset }: Props) {
         aria-controls={detailId}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? 'Hide the details' : 'Why this ranks here · plan details'}
+        {open ? 'Hide the details' : 'Full score breakdown · plan details'}
       </button>
 
       <div id={detailId} className="rank-card__detail" hidden={!open}>
@@ -198,13 +208,26 @@ export function RankedPlanCard({ ranked, preset }: Props) {
         </dl>
 
         <p className="rank-card__provenance">
-          {SOURCE_LABEL[plan.source_mode] ?? 'Source'}
-          {' · '}
-          <a href={plan.source_url} target="_blank" rel="noreferrer noopener">
-            view carrier page
-          </a>
-          {' · '}
-          {plan.freshness_label}
+          {SOURCE_LABEL[plan.source_mode] ?? 'Official carrier source'}
+          {isHttpUrl(plan.source_url) && (
+            <>
+              {' · '}
+              <a
+                className="rank-card__source-link"
+                href={plan.source_url}
+                target="_blank"
+                rel="noopener noreferrer external"
+              >
+                View official source&nbsp;↗
+              </a>
+            </>
+          )}
+          {plan.freshness_label && (
+            <>
+              {' · '}
+              {plan.freshness_label}
+            </>
+          )}
         </p>
       </div>
     </article>

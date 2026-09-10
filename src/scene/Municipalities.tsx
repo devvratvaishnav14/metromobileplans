@@ -14,6 +14,7 @@ import {
   type Point,
   type Polygon,
 } from '../data/municipalities'
+import { isSupportedMunicipality } from '../data/coverage'
 
 /** Small lift so the boundary lines sit cleanly on top of the land cap. */
 const OUTLINE_LIFT = 0.02
@@ -69,6 +70,7 @@ function labelAnchor(municipality: Municipality): Point {
 function MunicipalityPiece({
   municipality,
   active,
+  interactive,
   onEnter,
   onLeave,
   onDown,
@@ -76,6 +78,9 @@ function MunicipalityPiece({
 }: {
   municipality: Municipality
   active: boolean
+  /** false for municipalities outside V1 coverage — they render as pure
+   *  scenery: no hover name, no glow, no pointer affordance, no click. */
+  interactive: boolean
   onEnter: (id: string) => void
   onLeave: (id: string) => void
   onDown: (event: ThreeEvent<PointerEvent>) => void
@@ -126,17 +131,21 @@ function MunicipalityPiece({
     side.emissiveIntensity = glow.current * HOVER_EMISSIVE * 0.6
   })
 
+  const handlers = interactive
+    ? {
+        onPointerOver: (event: ThreeEvent<PointerEvent>) => {
+          event.stopPropagation()
+          onEnter(municipality.id)
+        },
+        onPointerMove: () => onEnter(municipality.id),
+        onPointerOut: () => onLeave(municipality.id),
+        onPointerDown: onDown,
+        onPointerUp: (event: ThreeEvent<PointerEvent>) => onUp(event, municipality.id),
+      }
+    : {}
+
   return (
-    <group
-      onPointerOver={(event: ThreeEvent<PointerEvent>) => {
-        event.stopPropagation()
-        onEnter(municipality.id)
-      }}
-      onPointerMove={() => onEnter(municipality.id)}
-      onPointerOut={() => onLeave(municipality.id)}
-      onPointerDown={onDown}
-      onPointerUp={(event: ThreeEvent<PointerEvent>) => onUp(event, municipality.id)}
-    >
+    <group {...handlers}>
       {parts.map((geometry, index) => (
         <mesh
           key={index}
@@ -145,6 +154,9 @@ function MunicipalityPiece({
           material={materials}
           castShadow
           receiveShadow
+          // unsupported pieces are invisible to the raycaster -> no cursor, no
+          // event, nothing behind them is blocked either.
+          raycast={interactive ? undefined : () => null}
         />
       ))}
 
@@ -274,6 +286,7 @@ export function Municipalities({
           key={municipality.id}
           municipality={municipality}
           active={activeId === municipality.id}
+          interactive={interactive && isSupportedMunicipality(municipality.id)}
           onEnter={enter}
           onLeave={leave}
           onDown={handleDown}

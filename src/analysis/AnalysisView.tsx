@@ -3,7 +3,9 @@ import './analysis.css'
 import { getMunicipality } from '../data/municipalities'
 import { CustomizePanel } from './CustomizePanel'
 import { DevCatalogue } from './DevCatalogue'
+import { HowRankingsWork } from './HowRankingsWork'
 import { RankedPlanCard } from './RankedPlanCard'
+import { ResultsTrustBar } from './ResultsTrustBar'
 import { useRanking } from './useRanking'
 import {
   EMPTY_CUSTOMIZATION,
@@ -65,6 +67,7 @@ export function AnalysisView({ municipalityId, onBack }: Props) {
 
   const [preset, setPreset] = useState<RankingPreset>('overall')
   const [showCatalogue, setShowCatalogue] = useState(false)
+  const [explainOpen, setExplainOpen] = useState(false)
 
   // One shared customization state. `committed` drives the request; `draft` is
   // what the panel edits until the user presses Apply.
@@ -253,6 +256,10 @@ export function AnalysisView({ municipalityId, onBack }: Props) {
               </div>
             ) : (
               <>
+                <ResultsTrustBar
+                  data={ranking.data}
+                  onExplain={() => setExplainOpen(true)}
+                />
                 <p className="rank-considered">
                   {ranking.refreshing && (
                     <span className="rank-considered__spinner" aria-hidden />
@@ -273,7 +280,8 @@ export function AnalysisView({ municipalityId, onBack }: Props) {
                   )}
                 </p>
                 <div
-                  className={`rank-list${ranking.refreshing ? ' rank-list--refreshing' : ''}`}
+                  key={ranking.data.generated_at}
+                  className={`rank-list rank-list--enter${ranking.refreshing ? ' rank-list--refreshing' : ''}`}
                   aria-busy={ranking.refreshing}
                 >
                   {ranking.data.results.map((r) => (
@@ -308,12 +316,14 @@ export function AnalysisView({ municipalityId, onBack }: Props) {
         </button>
 
         <p className="analysis-disclaimer">
-          Carrier names are used only to identify each provider's plans. This is
-          an independent comparison and is not affiliated with, authorized by, or
-          endorsed by Chatr, Bell, Koodo, Freedom Mobile, or their parent
-          networks.
+          Carrier names and logos are used only to identify each provider's
+          plans. This is an independent comparison and is not affiliated with,
+          authorized by, or endorsed by Chatr, Bell, Koodo, Freedom Mobile, or
+          their parent networks.
         </p>
       </div>
+
+      {explainOpen && <HowRankingsWork onClose={() => setExplainOpen(false)} />}
     </div>
   )
 }
