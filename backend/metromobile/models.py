@@ -184,7 +184,10 @@ class Plan(Base):
     data_unlimited_is_full_speed: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     data_hard_cap: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     throttled_after_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    throttle_speed: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # free-text, network-dependent throttle policy (e.g. Freedom's full sentence),
+    # not a single number -> Text, not a bounded String (PostgreSQL enforces the
+    # length, SQLite does not).
+    throttle_speed: Mapped[str | None] = mapped_column(Text, nullable=True)
     overage_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     overage_rate_per_gb_cad: Mapped[float | None] = mapped_column(Numeric(8, 2), nullable=True)
     data_rollover: Mapped[bool | None] = mapped_column(Boolean, nullable=True)

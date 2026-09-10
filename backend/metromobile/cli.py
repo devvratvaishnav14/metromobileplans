@@ -93,42 +93,58 @@ def bootstrap(
 
     with SessionLocal() as session:
         existing = session.scalar(select(func.count(Plan.id))) or 0
-        if existing and not force:
-            console.print(
-                f"[yellow]database already has {existing} plan(s)[/] — skipping bootstrap "
-                "(pass --force to re-run the idempotent imports)."
-            )
+    if existing and not force:
+        console.print(
+            f"[yellow]database already has {existing} plan(s)[/] — skipping bootstrap "
+            "(pass --force to re-run the idempotent imports)."
+        )
+        with SessionLocal() as session:
             _report_official_counts(session)
-            raise typer.Exit(0)
+        raise typer.Exit(0)
 
-        dataset = json.loads(_V1_DATASET.read_text())
+    dataset = json.loads(_V1_DATASET.read_text())
 
-        for slug in _V1_MANUAL_PROVIDERS:
-            block = dataset[slug]
-            manifest = {
-                "provider": block["provider"],
-                "source": block["source"],
-                "plans": block["plans"],
-            }
-            outcome = run_manual_import(
-                session,
-                manifest=manifest,
-                capture_path=_MANUAL_EVIDENCE,
-                operator="V1 approved snapshot (2026-09-09)",
-                verified_at=_V1_VERIFIED_AT,
-                source_mode="official_manual",
-                note="production bootstrap from the reviewed V1 dataset",
-            )
-            _print_outcome(slug, outcome)
-            if outcome.status not in ("success", "partial"):
-                raise typer.Exit(1)
-
-        chatr_fixture = None if live_chatr else _CHATR_SNAPSHOT
-        chatr_outcome = run_refresh("chatr", session, fixture_path=chatr_fixture)
-        _print_outcome("chatr", chatr_outcome)
-        if chatr_outcome.status not in ("success", "partial"):
+    # One fresh session per step. run_manual_import / run_refresh each commit;
+    # if one fails mid-flush its session is rolled back and never reused.
+    for slug in _V1_MANUAL_PROVIDERS:
+        block = dataset[slug]
+        manifest = {
+            "provider": block["provider"],
+            "source": block["source"],
+            "plans": block["plans"],
+        }
+        with SessionLocal() as session:
+            try:
+                outcome = run_manual_import(
+                    session,
+                    manifest=manifest,
+                    capture_path=_MANUAL_EVIDENCE,
+                    operator="V1 approved snapshot (2026-09-09)",
+                    verified_at=_V1_VERIFIED_AT,
+                    source_mode="official_manual",
+                    note="production bootstrap from the reviewed V1 dataset",
+                )
+            except Exception as exc:  # noqa: BLE001 - surface + roll back, don't leave a poisoned txn
+                session.rollback()
+                console.print(f"[red]{slug}: import failed[/] — {type(exc).__name__}: {exc}")
+                raise typer.Exit(1) from exc
+        _print_outcome(slug, outcome)
+        if outcome.status not in ("success", "partial"):
             raise typer.Exit(1)
 
+    chatr_fixture = None if live_chatr else _CHATR_SNAPSHOT
+    with SessionLocal() as session:
+        try:
+            chatr_outcome = run_refresh("chatr", session, fixture_path=chatr_fixture)
+        except Exception as exc:  # noqa: BLE001
+            session.rollback()
+            console.print(f"[red]chatr: refresh failed[/] — {type(exc).__name__}: {exc}")
+            raise typer.Exit(1) from exc
+    _print_outcome("chatr", chatr_outcome)
+    if chatr_outcome.status not in ("success", "partial"):
+        raise typer.Exit(1)
+
+    with SessionLocal() as session:
         verified, rankable = _report_official_counts(session)
 
     if not live_chatr and (verified != _EXPECTED_VERIFIED or rankable != _EXPECTED_RANKABLE):
