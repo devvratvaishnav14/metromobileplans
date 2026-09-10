@@ -82,7 +82,11 @@ export function Scene({
       <color attach="background" args={[COLORS.background]} />
       <Lights />
       <AnimatedWater />
-      <Municipalities interactive={!orbiting && !pushIn} onSelect={onSelect} />
+      <Municipalities
+        interactive={!orbiting && !pushIn}
+        chooserActive={destinationId === null && !orbiting && !pushIn}
+        onSelect={onSelect}
+      />
       <World />
       <Ambient />
       <CharacterController

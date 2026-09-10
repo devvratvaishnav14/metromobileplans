@@ -67,8 +67,8 @@ export function OnboardingNotifications({ dismissed, onClose }: Props) {
   if (removed || count === 0) return null
 
   const hint = isTouch
-    ? 'Tap an area to choose'
-    : 'Move around • Click an area to choose'
+    ? 'Tap a highlighted area'
+    : 'Drag to look around • click a highlighted area'
 
   const leaving = (index: number) =>
     exitStep >= index ? ' onb-card--leaving' : ''
@@ -103,8 +103,7 @@ export function OnboardingNotifications({ dismissed, onClose }: Props) {
       {count >= 2 && (
         <div className={`onb-card${leaving(2)}`}>
           <p className="onb-card__body">
-            Choose the area where you&rsquo;ll use your plan most. We&rsquo;ll
-            compare the best options available there.
+            Choose one of the highlighted areas below.
           </p>
         </div>
       )}

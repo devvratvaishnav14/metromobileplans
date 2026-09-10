@@ -27,27 +27,59 @@ body {
   inset: 0;
 }
 
-/* Hover label for a municipality (rendered via drei <Html>). Must never
-   capture pointer events, or it would break click-drag to rotate. */
-.municipality-label-wrap,
-.municipality-label {
+/* Always-visible choice tag over a supported municipality (drei <Html>). The
+   wrapper must not capture pointer events (it would block click-drag to
+   rotate); only the small pill itself is interactive. */
+.municipality-label-wrap {
   pointer-events: none;
   user-select: none;
 }
 
-.municipality-label {
-  font: 500 12px/1.2 system-ui, 'Segoe UI', Roboto, sans-serif;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  color: #24402c;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  padding: 3px 9px;
+.municipality-choice {
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 12px 5px;
+  font: 600 12.5px/1.15 system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: #1f3b28;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid #7ecb6f;
   border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(28, 56, 38, 0.16);
+  box-shadow: 0 3px 12px rgba(24, 54, 32, 0.28);
   backdrop-filter: blur(2px);
   transform: translateY(-2px);
-  will-change: opacity;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  white-space: nowrap;
+}
+.municipality-choice:hover {
+  background: #fff;
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(24, 54, 32, 0.34);
+}
+.municipality-choice:focus-visible {
+  outline: 2px solid #2f7d3f;
+  outline-offset: 2px;
+}
+.municipality-choice__name {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.municipality-choice__hint {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5a8a63;
+}
+@media (prefers-reduced-motion: reduce) {
+  .municipality-choice,
+  .municipality-choice:hover {
+    transition: none;
+    transform: translateY(-2px);
+  }
 }
 
 /* Speech bubble above the boy (drei <Html>, billboarded). Never captures

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Html, Line } from '@react-three/drei'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -18,8 +18,10 @@ import { isSupportedMunicipality } from '../data/coverage'
 
 /** Small lift so the boundary lines sit cleanly on top of the land cap. */
 const OUTLINE_LIFT = 0.02
-/** How far above the top surface the hover label floats (scene units). */
+/** How far above the top surface the labels float (scene units). */
 const LABEL_LIFT = 2.4
+/** Faint always-on glow for the supported (choosable) municipalities. */
+const REST_GLOW = 0.22
 /** Stable no-op raycast for inert (non-coverage) municipality meshes — a fresh
  *  function each render would make R3F re-apply the prop every render. */
 const INERT_RAYCAST = () => null
@@ -120,13 +122,17 @@ function MunicipalityPiece({
     }
   }, [parts, materials])
 
+  // supported municipalities keep a faint glow at rest so they read as the
+  // available choices; everyone else settles fully back to plain green.
+  const restGlow = interactive ? REST_GLOW : 0
+
   useFrame((_, delta) => {
-    const target = active ? 1 : 0
+    const target = active ? 1 : restGlow
     if (glow.current === target && target === 0) return
 
     const k = 1 - Math.exp(-delta * HOVER_LERP_RATE)
     glow.current = THREE.MathUtils.lerp(glow.current, target, k)
-    if (!active && glow.current < 0.002) glow.current = 0
+    if (!active && Math.abs(glow.current - restGlow) < 0.002) glow.current = restGlow
 
     const cap = materials[0] as THREE.MeshStandardMaterial
     const side = materials[1] as THREE.MeshStandardMaterial
@@ -167,10 +173,10 @@ function MunicipalityPiece({
         <Line
           key={`outline-${index}`}
           points={points}
-          color={COLORS.border}
-          lineWidth={1.25}
+          color={interactive ? COLORS.hover : COLORS.border}
+          lineWidth={interactive ? 2.4 : 1.25}
           transparent
-          opacity={0.82}
+          opacity={interactive ? 0.95 : 0.82}
           polygonOffset
           polygonOffsetFactor={-2}
         />
@@ -179,48 +185,45 @@ function MunicipalityPiece({
   )
 }
 
-/** The single floating name label, shown for whichever municipality is hovered. */
-function HoverLabel({
+/**
+ * An always-visible, clickable name tag floating over a supported municipality.
+ * Clicking it runs the exact same selection flow as clicking the land itself.
+ */
+function SupportedLabel({
   municipality,
-  visible,
-  opacityRef,
+  onSelect,
 }: {
   municipality: Municipality
-  visible: boolean
-  opacityRef: RefObject<number>
+  onSelect?: (id: string) => void
 }) {
-  const ref = useRef<HTMLDivElement>(null)
   const anchor = useMemo(() => labelAnchor(municipality), [municipality])
-
-  useFrame((_, delta) => {
-    const target = visible ? 1 : 0
-    const k = 1 - Math.exp(-delta * HOVER_LERP_RATE)
-    opacityRef.current = THREE.MathUtils.lerp(opacityRef.current, target, k)
-    if (ref.current) {
-      ref.current.style.opacity = String(Math.min(1, opacityRef.current * 1.5))
-    }
-  })
 
   return (
     <Html
       position={[anchor[0], anchor[1], TERRAIN_HEIGHT + LABEL_LIFT]}
       center
       wrapperClass="municipality-label-wrap"
-      style={{ pointerEvents: 'none' }}
-      zIndexRange={[20, 0]}
+      style={{ pointerEvents: 'auto' }}
+      zIndexRange={[24, 0]}
     >
-      <div ref={ref} className="municipality-label">
-        {municipality.name}
-      </div>
+      <button
+        type="button"
+        className="municipality-choice"
+        onClick={() => onSelect?.(municipality.id)}
+      >
+        <span className="municipality-choice__name">{municipality.name}</span>
+        <span className="municipality-choice__hint">Click to choose</span>
+      </button>
     </Html>
   )
 }
 
 /**
  * All Metro Vancouver municipalities, drawn together in their real-world
- * relative positions as simple extruded green land, each with a thin
- * boundary outline and an independent hover highlight. Exactly one name
- * label is shown at a time, for the hovered municipality.
+ * relative positions as simple extruded green land, each with a thin boundary
+ * outline. Only the V1-supported ones (Vancouver / Burnaby / Surrey) are
+ * interactive — highlighted, hover-brightened, and carrying an always-visible
+ * clickable name tag. Every other municipality is inert scenery.
  *
  * The data is authored in a 2D map plane (+x East, +y North). The whole
  * group is laid flat (rotate -90° about X, so North points into -Z) and
@@ -228,16 +231,16 @@ function HoverLabel({
  */
 export function Municipalities({
   interactive = true,
+  chooserActive = true,
   onSelect,
 }: {
   interactive?: boolean
-  /** Fired on a genuine click (not a drag) of a municipality. */
+  /** Show the always-visible choice tags — true only while no place is chosen. */
+  chooserActive?: boolean
+  /** Fired on a genuine click (not a drag) of a municipality or its tag. */
   onSelect?: (id: string) => void
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-  // Kept mounted through the fade-out so the label can animate away.
-  const [labelId, setLabelId] = useState<string | null>(null)
-  const labelOpacity = useRef(0)
 
   // Pointer-down screen position + time, so a drag-to-rotate is not mistaken
   // for a click-to-select.
@@ -246,7 +249,6 @@ export function Municipalities({
   const enter = (id: string) => {
     if (!interactive) return
     setHoveredId(id)
-    setLabelId(id)
   }
   const leave = (id: string) => {
     setHoveredId((current) => (current === id ? null : current))
@@ -273,14 +275,6 @@ export function Municipalities({
   }
 
   const activeId = interactive ? hoveredId : null
-  const labelMunicipality = labelId
-    ? municipalities.find((m) => m.id === labelId)
-    : undefined
-
-  // Unmount the label once it has fully faded and nothing is hovered.
-  useFrame(() => {
-    if (!activeId && labelId && labelOpacity.current < 0.02) setLabelId(null)
-  })
 
   return (
     <group rotation={[-Math.PI / 2, 0, 0]} position={[0, -TERRAIN_HEIGHT, 0]}>
@@ -293,8 +287,8 @@ export function Municipalities({
           // transient `interactive` flag (orbiting/zooming): OrbitControls fires
           // its `start` event on pointer-down, which would tear the click
           // handlers off a supported piece before pointer-up and the click would
-          // never reach `onSelect`. `interactive` still suppresses hover glow /
-          // label for everyone via `enter()` + `activeId` below.
+          // never reach `onSelect`. `interactive` still suppresses hover glow
+          // for everyone via `enter()` + `activeId`.
           interactive={isSupportedMunicipality(municipality.id)}
           onEnter={enter}
           onLeave={leave}
@@ -303,13 +297,16 @@ export function Municipalities({
         />
       ))}
 
-      {labelMunicipality && (
-        <HoverLabel
-          municipality={labelMunicipality}
-          visible={activeId === labelMunicipality.id}
-          opacityRef={labelOpacity}
-        />
-      )}
+      {chooserActive &&
+        municipalities
+          .filter((m) => isSupportedMunicipality(m.id))
+          .map((municipality) => (
+            <SupportedLabel
+              key={`label-${municipality.id}`}
+              municipality={municipality}
+              onSelect={onSelect}
+            />
+          ))}
     </group>
   )
 }
