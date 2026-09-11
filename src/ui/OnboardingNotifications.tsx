@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useIsTouch } from './useIsTouch'
 
-/** When each message slides in (ms after mount). */
-const SHOW_AT = [2200, 3700, 5100]
+/** When each message slides in (ms after mount). Kept sequential — a new
+ *  visitor should see all three within ~1.5s, not wait several seconds. */
+const SHOW_AT = [150, 600, 1050]
 /** Compressed schedule when the viewer prefers reduced motion. */
-const SHOW_AT_REDUCED = [700, 1200, 1700]
+const SHOW_AT_REDUCED = [80, 320, 560]
 
 /** One card's exit animation length (must match `onb-out` in overlay.css). */
 const EXIT_DURATION = 820

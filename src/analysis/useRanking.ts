@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { ApiError, fetchRanking } from '../api/client'
+import { ApiError } from '../api/client'
+import type { RankingParams } from '../api/client'
+import { getRanking, peekRanking } from '../api/rankingCache'
 import type { RankingPreset, RankingResponse } from '../api/types'
 import {
   customizationKey,
@@ -43,21 +45,24 @@ export function useRanking({
 }: Args): State & { reload: () => void } {
   const [nonce, setNonce] = useState(0)
   const key = `${preset}#${municipalityId ?? ''}#${customizationKey(customization)}#${nonce}`
+
+  const params: RankingParams = {
+    preset,
+    municipalityId,
+    // student eligibility is a confirmed user-context flag; it applies to
+    // every preset once set, not only "Best for Students".
+    studentEligible: customization.studentEligible,
+    customization: toRankingCustomization(customization),
+  }
+
   const [resolved, setResolved] = useState<Resolved | null>(null)
 
   useEffect(() => {
     const ctrl = new AbortController()
-    fetchRanking(
-      {
-        preset,
-        municipalityId,
-        // student eligibility is a confirmed user-context flag; it applies to
-        // every preset once set, not only "Best for Students".
-        studentEligible: customization.studentEligible,
-        customization: toRankingCustomization(customization),
-      },
-      ctrl.signal,
-    )
+    // `getRanking` returns a warm cache hit or a shared in-flight request when
+    // one exists (the map prefetches "Best Overall" before this ever mounts),
+    // so the normal map -> results journey never issues a second request.
+    getRanking(params, ctrl.signal)
       .then((data) => setResolved({ key, state: { status: 'ready', data } }))
       .catch((err: unknown) => {
         if (ctrl.signal.aborted) return
@@ -71,12 +76,19 @@ export function useRanking({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
+  // A ranking already warmed for these params (prefetched during the zoom, or a
+  // preset visited earlier) is rendered straight away — derived here rather than
+  // set in the effect, so there is no loading flash and no extra render.
+  const warm = resolved?.key === key ? undefined : peekRanking(params)
+
   let state: State
   if (resolved?.key === key) {
     state =
       resolved.state.status === 'ready'
         ? { status: 'ready', data: resolved.state.data, refreshing: false }
         : resolved.state
+  } else if (warm) {
+    state = { status: 'ready', data: warm, refreshing: false }
   } else if (resolved?.state.status === 'ready') {
     // a newer request is in flight — keep the last results visible, dimmed
     state = { status: 'ready', data: resolved.state.data, refreshing: true }

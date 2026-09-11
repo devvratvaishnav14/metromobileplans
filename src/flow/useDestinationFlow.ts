@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DESTINATIONS } from '../scene/navigation/destinations'
 import { isSupportedMunicipality } from '../data/coverage'
+import { defaultRankingParams, prefetchRanking } from '../api/rankingCache'
 
 /**
  * Where the user is in the "pick a municipality" journey:
@@ -68,6 +69,10 @@ export function useDestinationFlow(): DestinationFlow {
     // Only Vancouver / Burnaby / Surrey are interactive on the map, so this is
     // only ever called for a supported municipality — the guard is defensive.
     if (!DESTINATIONS[id] || !isSupportedMunicipality(id)) return
+    // Kick the ranking request off now — at selection, not when the cinematic
+    // zoom ends — so it runs while the character walks and the camera dives.
+    // Shares the warm-up started on map mount (same cache key); never a duplicate.
+    prefetchRanking(defaultRankingParams(id))
     clearTimers()
     setDestinationId(id)
     setPhase('traveling')

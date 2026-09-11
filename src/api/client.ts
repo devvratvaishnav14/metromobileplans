@@ -20,6 +20,23 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Wake the backend. The free Render web service sleeps after inactivity and
+ * cold-starts on the next request; firing this the moment the map mounts lets
+ * that boot overlap with the user reading the intro and picking a city.
+ * Fire-and-forget — a failure here changes nothing, the real request retries.
+ */
+export async function pingBackend(): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/health`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+  } catch {
+    /* ignore — this is only a warm-up */
+  }
+}
+
 export async function fetchPlans(
   municipalityId: string | null,
   signal?: AbortSignal,
