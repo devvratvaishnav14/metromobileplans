@@ -1,0 +1,60 @@
+/* Shared creator signature — used on the map (floating) and the results page
+   (in flow, at the foot of the content). */
+
+.creator-credit {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  user-select: none;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+.creator-credit__name {
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.creator-credit__role {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* --- floating over the miniature map (light sky/water background) --- */
+.creator-credit--overlay {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(12, 28, 45, 0.28);
+}
+.creator-credit--overlay .creator-credit__name {
+  color: #12324a;
+}
+.creator-credit--overlay .creator-credit__role {
+  color: rgba(18, 50, 74, 0.68);
+}
+
+/* --- in flow at the foot of the dark results page --- */
+.creator-credit--footer {
+  margin-top: 24px;
+}
+.creator-credit--footer .creator-credit__name {
+  color: #9fb0c8;
+}
+.creator-credit--footer .creator-credit__role {
+  color: #64748b;
+}
+
+@media (max-width: 480px) {
+  .creator-credit--overlay {
+    left: 12px;
+    bottom: 11px;
+  }
+  .creator-credit__name {
+    font-size: 12px;
+  }
+  .creator-credit__role {
+    font-size: 10px;
+  }
+}

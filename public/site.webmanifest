@@ -1,0 +1,14 @@
+{
+  "name": "Metro Mobile Plans",
+  "short_name": "Metro Plans",
+  "description": "Compare verified mobile plans across Metro Vancouver.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e1420",
+  "theme_color": "#2f9ad4",
+  "icons": [
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" }
+  ]
+}

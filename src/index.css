@@ -82,6 +82,18 @@ body {
   }
 }
 
+/* Slightly more compact tags on small phones so three of them don't crowd. */
+@media (max-width: 430px) {
+  .municipality-choice {
+    padding: 3px 10px 4px;
+    font-size: 12px;
+  }
+  .municipality-choice__hint {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+}
+
 /* Speech bubble above the boy (drei <Html>, billboarded). Never captures
    pointer events. A downward tail points back at him. */
 .speech-wrap,

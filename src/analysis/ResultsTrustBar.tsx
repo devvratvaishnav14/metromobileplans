@@ -41,10 +41,9 @@ export function ResultsTrustBar({ data, onExplain }: Props) {
         <span className="rank-trust__sep">·</span>
         <span>Verified from official carrier sources</span>
         {verified && (
-          <>
-            <span className="rank-trust__sep">·</span>
-            <span>Last verified {formatDay(verified)}</span>
-          </>
+          <span className="rank-trust__verified">
+            Last verified {formatDay(verified)}
+          </span>
         )}
       </p>
       <p className="rank-trust__line rank-trust__line--muted">

@@ -323,7 +323,7 @@ code {
   margin: 4px 0 20px;
 }
 .rank-tab {
-  padding: 8px 14px;
+  padding: 9px 15px;
   background: #121a29;
   border: 1px solid #1f2a3d;
   border-radius: 999px;
@@ -773,7 +773,7 @@ code {
 }
 
 .rank-card__price { text-align: right; white-space: nowrap; }
-.rank-card__amount { font-size: 26px; font-weight: 700; color: #eaf1fb; }
+.rank-card__amount { font-size: clamp(22px, 6.4vw, 26px); font-weight: 700; color: #eaf1fb; }
 .rank-card__unit { font-size: 13px; color: #8a99b2; margin-left: 2px; }
 .rank-card__qualifier {
   display: block;
@@ -874,8 +874,8 @@ code {
 .rank-card__score-src { font-size: 11.5px; color: #8595ad; line-height: 1.45; }
 
 .rank-card__toggle {
-  margin-top: 14px;
-  padding: 6px 0;
+  margin-top: 12px;
+  padding: 9px 0;
   background: none;
   border: none;
   color: #7fb0e8;
@@ -999,20 +999,37 @@ code {
 }
 .analysis-back:hover { background: #1f2d45; border-color: #3a5a86; }
 
+.analysis-foot {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid #1a2334;
+}
 .analysis-disclaimer {
-  margin: 20px 0 0;
+  margin: 0;
   font-size: 11px;
   line-height: 1.5;
   color: #64748b;
   max-width: 68ch;
 }
+.analysis-about-link {
+  margin: 12px 0 0;
+  padding: 4px 0;
+  display: inline-block;
+  background: none;
+  border: none;
+  color: #7fb0e8;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.analysis-about-link:hover { color: #a9ccf0; text-decoration: underline; }
 
 /* --- results trust / freshness strip ----------------------------------- */
 .rank-trust {
   margin: 0 0 12px;
-  padding: 11px 14px;
-  background: #101a26;
-  border: 1px solid #1f3a2c;
+  padding: 12px 15px;
+  background: #0f1c1a;
+  border: 1px solid #2a5f45;
   border-radius: 10px;
 }
 .rank-trust__line {
@@ -1020,24 +1037,49 @@ code {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 6px 8px;
   font-size: 12.5px;
   color: #cdd8e8;
 }
 .rank-trust__line--muted {
-  margin-top: 5px;
+  margin-top: 6px;
   font-size: 11.5px;
   color: #8a99b2;
 }
 .rank-trust__dot {
-  width: 8px;
-  height: 8px;
+  position: relative;
+  width: 9px;
+  height: 9px;
   flex: none;
   border-radius: 50%;
   background: #43c47f;
-  box-shadow: 0 0 0 3px rgba(67, 196, 127, 0.18);
+  box-shadow: 0 0 0 3px rgba(67, 196, 127, 0.2);
+}
+/* one short signal wave on first load — no loop */
+.rank-trust__dot::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid rgba(67, 196, 127, 0.55);
+  animation: trust-ping 1150ms ease-out 1 both;
+}
+@keyframes trust-ping {
+  0% { transform: scale(0.55); opacity: 0.85; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.rank-trust__verified {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(67, 196, 127, 0.12);
+  color: #a9e6c4;
+  white-space: nowrap;
 }
 .rank-trust__strong { font-weight: 600; color: #a9e6c4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rank-trust__dot::after { animation: none; display: none; }
+}
 .rank-trust__sep { color: #3f5568; }
 .rank-trust__explain {
   margin-left: auto;
@@ -1109,4 +1151,15 @@ code {
 
 @media (prefers-reduced-motion: reduce) {
   .hrw-overlay, .hrw-panel { animation: none; }
+}
+
+/* --- narrow phones (~390-430px): tighten spacing, keep tap targets ----- */
+@media (max-width: 430px) {
+  .analysis-inner { padding: 28px 14px 56px; }
+  .rank-card { padding: 16px 15px; }
+  .rank-card__head { gap: 12px; }
+  .rank-trust { padding: 11px 12px; }
+  .rank-trust__explain { margin-left: 0; }
+  .hrw-head { padding: 14px 14px 10px; }
+  .hrw-body { padding: 12px 14px 16px; }
 }

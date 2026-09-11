@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import './analysis.css'
 import { getMunicipality } from '../data/municipalities'
+import { CreatorCredit } from '../ui/CreatorCredit'
+import { AboutProject } from './AboutProject'
 import { CustomizePanel } from './CustomizePanel'
 import { DevCatalogue } from './DevCatalogue'
 import { HowRankingsWork } from './HowRankingsWork'
@@ -68,6 +70,7 @@ export function AnalysisView({ municipalityId, onBack }: Props) {
   const [preset, setPreset] = useState<RankingPreset>('overall')
   const [showCatalogue, setShowCatalogue] = useState(false)
   const [explainOpen, setExplainOpen] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
 
   // One shared customization state. `committed` drives the request; `draft` is
   // what the panel edits until the user presses Apply.
@@ -315,15 +318,26 @@ export function AnalysisView({ municipalityId, onBack }: Props) {
           ← Back to the map
         </button>
 
-        <p className="analysis-disclaimer">
-          Carrier names and logos are used only to identify each provider's
-          plans. This is an independent comparison and is not affiliated with,
-          authorized by, or endorsed by Chatr, Bell, Koodo, Freedom Mobile, or
-          their parent networks.
-        </p>
+        <footer className="analysis-foot">
+          <p className="analysis-disclaimer">
+            Carrier names and logos are used only to identify each provider's
+            plans. This is an independent comparison and is not affiliated with,
+            authorized by, or endorsed by Chatr, Bell, Koodo, Freedom Mobile, or
+            their parent networks.
+          </p>
+          <button
+            type="button"
+            className="analysis-about-link"
+            onClick={() => setAboutOpen(true)}
+          >
+            About this project
+          </button>
+          <CreatorCredit variant="footer" />
+        </footer>
       </div>
 
       {explainOpen && <HowRankingsWork onClose={() => setExplainOpen(false)} />}
+      {aboutOpen && <AboutProject onClose={() => setAboutOpen(false)} />}
     </div>
   )
 }

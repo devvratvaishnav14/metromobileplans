@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <rect width="1200" height="1200" fill="#0e1420"/>
+  <g transform="translate(0 285)">
+    <rect width="1200" height="630" fill="#0e1420"/>
+    <ellipse cx="240" cy="20" rx="760" ry="440" fill="#182541" opacity="0.55"/>
+    <g transform="translate(915 322)">
+      <circle r="196" fill="#13324c"/>
+      <rect x="-150" y="-40" width="150" height="120" rx="26" fill="#57b657" transform="rotate(-13)"/>
+      <rect x="-24" y="-120" width="140" height="120" rx="26" fill="#63bf63" transform="rotate(9)"/>
+      <rect x="6" y="26" width="150" height="120" rx="26" fill="#4fac52" transform="rotate(-6)"/>
+      <path d="M-190 96 q120 40 250 6 q90 -24 150 8" stroke="#45b6e6" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.8"/>
+      <g transform="translate(14 -30)">
+        <path fill="#ffffff" d="M0 -78c-26 0-47 20-47 46 0 32 37 74 43 81 2 2 6 2 8 0 6-7 43-49 43-81 0-26-21-46-47-46z"/>
+        <circle cx="0" cy="-32" r="10" fill="#1f6fb8"/>
+        <path d="M-19 -14c11-11 27-11 38 0" fill="none" stroke="#1f6fb8" stroke-width="10" stroke-linecap="round"/>
+        <path d="M-31 -26c17-18 45-18 62 0" fill="none" stroke="#1f6fb8" stroke-width="10" stroke-linecap="round"/>
+      </g>
+    </g>
+    <g transform="translate(96 92)">
+      <rect width="72" height="72" rx="17" fill="#2f9ad4"/>
+      <rect width="72" height="36" rx="17" fill="#3aa9e0"/>
+      <path fill="#ffffff" d="M36 10.4c-9.7 0-17.6 7.7-17.6 17.3 0 11.9 14 27.9 16.2 30.4.7.8 2 .8 2.7 0 2.3-2.5 16.3-18.5 16.3-30.4 0-9.6-7.9-17.3-17.6-17.3z"/>
+      <circle cx="36" cy="27.5" r="3.8" fill="#1f6fb8"/>
+      <path d="M28.8 34.2c4-4.3 10.4-4.3 14.4 0" fill="none" stroke="#1f6fb8" stroke-width="3.8" stroke-linecap="round"/>
+      <path d="M24.5 29.6c6.3-6.5 16.2-6.5 22.5 0" fill="none" stroke="#1f6fb8" stroke-width="3.8" stroke-linecap="round"/>
+    </g>
+    <text x="97" y="292" fill="#f3f6fc" font-size="74" font-weight="700" letter-spacing="-1">Metro Mobile Plans</text>
+    <text x="99" y="344" fill="#a9b7cd" font-size="29">Compare verified mobile plans across Metro Vancouver</text>
+    <line x1="100" y1="388" x2="556" y2="388" stroke="#2b3a54" stroke-width="2"/>
+    <text x="100" y="430" fill="#7183a0" font-size="21">Deterministic rankings &#183; Official carrier sources</text>
+    <text x="100" y="464" fill="#7183a0" font-size="21">Vancouver &#183; Burnaby &#183; Surrey</text>
+  </g>
+</svg>
