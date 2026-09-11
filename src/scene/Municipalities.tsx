@@ -209,7 +209,18 @@ function SupportedLabel({
       <button
         type="button"
         className="municipality-choice"
-        onClick={() => onSelect?.(municipality.id)}
+        // Keep the press inside the button. It bubbles otherwise to the R3F
+        // event-source div, where OrbitControls calls setPointerCapture() on
+        // pointer-down; that capture retargets the following pointer-up / click
+        // to the canvas, so the button's own onClick never fires — and the map
+        // would also start rotating. Stopping propagation here restores a plain
+        // DOM click and leaves the map still.
+        onPointerDown={(event) => event.stopPropagation()}
+        onPointerUp={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation()
+          onSelect?.(municipality.id)
+        }}
       >
         <span className="municipality-choice__name">{municipality.name}</span>
         <span className="municipality-choice__hint">Click to choose</span>

@@ -68,7 +68,7 @@ export function OnboardingNotifications({ dismissed, onClose }: Props) {
 
   const hint = isTouch
     ? 'Tap a highlighted area'
-    : 'Drag to look around • click a highlighted area'
+    : 'Drag to look around • Click a highlighted area'
 
   const leaving = (index: number) =>
     exitStep >= index ? ' onb-card--leaving' : ''

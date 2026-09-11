@@ -45,6 +45,11 @@ export function Overlay({ journeyStarted, confirmation }: Props) {
       )}
       <InfoButton onClick={() => setInfoOpen(true)} />
       {infoOpen && <InfoPanel onClose={() => setInfoOpen(false)} />}
+
+      <div className="map-credit">
+        <span className="map-credit__name">Devvrat Vaishnav</span>
+        <span className="map-credit__role">BSc in Data Science, SFU</span>
+      </div>
     </div>
   )
 }
