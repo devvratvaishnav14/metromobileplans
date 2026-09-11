@@ -50,8 +50,8 @@ export function AboutProject({ onClose }: Props) {
 
         <div className="hrw-body">
           <p>
-            Metro Mobile Plans was built by <strong>Devvrat Vaishnav</strong> (BSc
-            in Data Science, SFU) as an independent project.
+            Metro Mobile Plans is an independent project by{' '}
+            <strong>Devvrat Vaishnav</strong>, a BSc Data Science student at SFU.
           </p>
           <ul>
             <li>
