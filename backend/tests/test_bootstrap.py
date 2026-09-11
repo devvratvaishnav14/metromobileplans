@@ -73,6 +73,13 @@ def test_fresh_database_reproduces_the_approved_official_dataset(session):
     bell = next(p for p in official if p.provider_slug == "bell")
     assert "bell.ca" in bell.source_url
 
+    # Freedom provenance points at the stable top-level plans page, not the
+    # deeper BYOP route that no longer resolves to a usable public page
+    freedom = [p for p in official if p.provider_slug == "freedom-mobile"]
+    assert freedom and all(
+        p.source_url == "https://shop.freedommobile.ca/en-CA/plans" for p in freedom
+    )
+
 
 def test_bootstrap_is_idempotent(session):
     now = dt.datetime(2026, 9, 10, 12, 0, tzinfo=dt.timezone.utc)

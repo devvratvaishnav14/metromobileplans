@@ -1351,11 +1351,13 @@ _PROVIDER_BLOCK = {
             "homepage_url": "https://www.freedommobile.ca/",
         },
         "source": {
-            "url": "https://shop.freedommobile.ca/en-CA/plans/bring-your-own-phone",
+            "url": "https://shop.freedommobile.ca/en-CA/plans",
             "kind": "capture",
             "description": (
-                "Freedom Mobile official Bring-Your-Own-Phone plans page, captured by "
-                "an operator for British Columbia."
+                "Freedom Mobile official plans page (BYOP pricing), captured by an "
+                "operator for British Columbia. The deeper /plans/bring-your-own-phone "
+                "route is not a reliable public landing page; the stable top-level "
+                "plans page is used as the official source."
             ),
         },
         "extractor": extract_freedom_plans,

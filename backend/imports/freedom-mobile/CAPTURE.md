@@ -21,9 +21,11 @@ Bell / Koodo.
   `V6B 1A1`) and confirm the page shows **British Columbia** before reading any
   prices. This is the single most important step.
 * Choose the **Bring Your Own Phone** view — there's a tab / toggle near the plan
-  grid, or use
-  `shop.freedommobile.ca/en-CA/plans/bring-your-own-phone` directly. Avoid the
-  "MyTab" / "with a phone" / financing view.
+  grid on `shop.freedommobile.ca/en-CA/plans`. (The deeper
+  `.../plans/bring-your-own-phone` URL is not a reliable public landing page —
+  it can render "Sorry, something went wrong" — so the stored official source is
+  the top-level `/en-CA/plans` page.) Avoid the "MyTab" / "with a phone" /
+  financing view.
 * **Digital Discount toggle:** Freedom's headline price is usually
   "$X/mo after Digital Discount" (–$5/mo, requires **AutoPay + eBill**). If
   there's a toggle for it, leave it in its **default** state and note which state
