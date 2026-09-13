@@ -51,8 +51,8 @@ def test_fresh_database_reproduces_the_approved_official_dataset(session):
     rankable = [p for p in official if p.is_rankable]
     restricted = [p for p in official if p.eligibility_restricted]
 
-    assert len(verified) == 26
-    assert len(rankable) == 24
+    assert len(verified) == 29
+    assert len(rankable) == 27
     assert len(restricted) == 2
 
     # both restricted plans are the eligibility-gated student offers, kept but
@@ -92,7 +92,7 @@ def test_bootstrap_is_idempotent(session):
 
 def test_bootstrap_repairs_a_partially_populated_database(session):
     """A failed earlier deploy left only Bell + Koodo + Chatr. Re-running the
-    imports must add the missing Freedom provider and reach 26 / 24 without
+    imports must add the missing Freedom provider and reach 29 / 27 without
     disturbing or duplicating the plans already there."""
     now = dt.datetime(2026, 9, 10, 12, 0, tzinfo=dt.timezone.utc)
 
@@ -117,10 +117,10 @@ def test_bootstrap_repairs_a_partially_populated_database(session):
     official = session.scalars(
         select(Plan).where(Plan.source_mode != "trusted_secondary")
     ).all()
-    assert sum(1 for p in official if p.verification_status == "verified") == 26
-    assert sum(1 for p in official if p.is_rankable) == 24
+    assert sum(1 for p in official if p.verification_status == "verified") == 29
+    assert sum(1 for p in official if p.is_rankable) == 27
     assert {p.external_id for p in official if p.provider_slug == "bell"} == bell_ids_before
-    assert sum(1 for p in official if p.provider_slug == "freedom-mobile") == 7
+    assert sum(1 for p in official if p.provider_slug == "freedom-mobile") == 10
 
 
 def test_bootstrapped_database_gives_the_frozen_best_overall_top5(session):

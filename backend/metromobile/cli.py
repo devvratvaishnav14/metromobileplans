@@ -63,8 +63,8 @@ _V1_VERIFIED_AT = dt.datetime(2026, 9, 9, 12, 0, tzinfo=dt.timezone.utc)
 _V1_MANUAL_PROVIDERS = ("bell", "koodo", "freedom-mobile")
 
 # the frozen, approved V1 official dataset — a fresh database must reproduce this
-_EXPECTED_VERIFIED = 26
-_EXPECTED_RANKABLE = 24
+_EXPECTED_VERIFIED = 29
+_EXPECTED_RANKABLE = 27
 
 
 @app.command()

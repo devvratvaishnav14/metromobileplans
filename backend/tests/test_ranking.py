@@ -17,6 +17,7 @@ import json
 from pathlib import Path
 
 import pytest
+from sqlalchemy import select
 
 from metromobile.models import Plan
 from metromobile.pipeline import run_manual_import
@@ -432,12 +433,19 @@ class TestApprovedSimulationRegression:
         _import_v1_dataset(session)
         res = rank_plans(session, MOST_DATA, RankingContext(), NOW, limit=5)
         ids = [r.plan.external_id for r in res.results]
+        # 5th slot updated 2026-09-13: the 3 new 250GB Freedom tiers (30/40/50GB
+        # Roam Beyond) tie every existing 250GB Freedom plan on data_score (data
+        # is capped by the log scale at 250GB); among that 5-way tie the 3
+        # cheapest win the remaining Top-5 slots after the two Bell Unlimited
+        # plans -- 10GB, 20GB, then the new 30GB Roam Beyond, which displaces the
+        # previously-5th total-freedom-175gb-roam-beyond-10gb (lower raw GB, so a
+        # lower data_score than any 250GB-tier plan).
         assert ids == [
             "bell-ultra-unlimited-with-u-s-mexico-roaming",
             "bell-ultra-unlimited-with-international-roaming",
             "total-freedom-250gb-roam-beyond-10gb",
             "total-freedom-250gb-roam-beyond-20gb",
-            "total-freedom-175gb-roam-beyond-10gb",
+            "total-freedom-250gb-roam-beyond-30gb",
         ]
 
     def test_best_current_offers_top5_is_mixed_bell_and_freedom(self, session):
@@ -453,6 +461,36 @@ class TestApprovedSimulationRegression:
         ]
         providers = {r.plan.provider_slug for r in res.results}
         assert providers == {"bell", "freedom-mobile"}   # no provider-diversity manipulation needed
+
+    def test_freedom_gains_three_new_250gb_roam_beyond_tiers(self, session):
+        """Added 2026-09-13 from a fresh Freedom BC capture: three additional
+        standalone 250GB plans (30/40/50GB Roam Beyond), each a flat $5/mo
+        Digital Discount off its regular price -- same mechanism as every other
+        Freedom plan."""
+        _import_v1_dataset(session)
+        by_id = {
+            p.external_id: p
+            for p in session.scalars(select(Plan)).all()
+            if p.provider_slug == "freedom-mobile"
+        }
+        assert len(by_id) == 10
+
+        expected = {
+            "total-freedom-250gb-roam-beyond-30gb": (85.0, 80.0),
+            "total-freedom-250gb-roam-beyond-40gb": (95.0, 90.0),
+            "total-freedom-250gb-roam-beyond-50gb": (105.0, 100.0),
+        }
+        for ext_id, (regular, autopay) in expected.items():
+            plan = by_id[ext_id]
+            assert plan.regular_price_cad == regular
+            assert plan.autopay_price_cad == autopay
+            assert plan.autopay_discount_cad == 5
+            assert plan.data_full_speed_gb == 250.0
+            assert plan.network_technology == "5G+"
+            assert plan.has_5g is True
+            assert plan.includes_us is True and plan.includes_mexico is True
+            assert plan.is_rankable is True
+            assert plan.eligibility_restricted is not True
 
     def test_best_for_students_top5(self, session):
         _import_v1_dataset(session)
@@ -491,7 +529,7 @@ _APPROVED_TOP5 = {
         "bell-ultra-unlimited-with-international-roaming",
         "total-freedom-250gb-roam-beyond-10gb",
         "total-freedom-250gb-roam-beyond-20gb",
-        "total-freedom-175gb-roam-beyond-10gb",
+        "total-freedom-250gb-roam-beyond-30gb",
     ],
     OFFERS: [
         "bell-ultra-unlimited-with-u-s-mexico-roaming",
@@ -594,7 +632,7 @@ class TestCustomFiltersAgainstDataset:
         )
         assert [r.plan.external_id for r in res.results] == ["4014", "5156", "koodo-250mb-3g"]
         assert all(r.price_used_cad is not None and r.price_used_cad <= 20 for r in res.results)
-        assert res.pre_filter_count == 24
+        assert res.pre_filter_count == 27
 
     def test_annual_monthly_equivalent_budget_comparison(self, session):
         _import_v1_dataset(session)
@@ -654,7 +692,7 @@ class TestCustomFiltersAgainstDataset:
         )
         assert all(r.plan.plan_type == "prepaid" for r in pre.results)
         assert all(r.plan.plan_type == "postpaid" for r in post.results)
-        assert pre.candidate_count + post.candidate_count == pre.pre_filter_count == 24
+        assert pre.candidate_count + post.candidate_count == pre.pre_filter_count == 27
 
     def test_require_5g(self, session):
         _import_v1_dataset(session)
@@ -663,7 +701,7 @@ class TestCustomFiltersAgainstDataset:
             filters=CustomFilters(require_5g=True),
         )
         assert all(r.plan.network_technology in ("5G", "5G+") for r in res.results)
-        assert res.candidate_count == 14
+        assert res.candidate_count == 17  # +3 for the new 5G+ Freedom Roam Beyond tiers
 
     def test_require_can_us_mex(self, session):
         _import_v1_dataset(session)
@@ -733,7 +771,7 @@ class TestCustomFiltersAgainstDataset:
             gb = data_gb(r.plan)
             assert gb == "UNLIMITED" or gb >= 100
             assert r.plan.includes_us is True and r.plan.includes_mexico is True
-        assert res.candidate_count == 5
+        assert res.candidate_count == 8  # +3 for the new postpaid 250GB+US/MX Freedom tiers
 
     def test_impossible_filter_combination_returns_empty(self, session):
         _import_v1_dataset(session)
@@ -743,7 +781,7 @@ class TestCustomFiltersAgainstDataset:
         )
         assert res.results == []
         assert res.candidate_count == 0
-        assert res.pre_filter_count == 24  # filters never silently relaxed
+        assert res.pre_filter_count == 27  # filters never silently relaxed
 
     def test_best_current_offers_still_requires_offer_over_zero(self, session):
         _import_v1_dataset(session)
@@ -781,7 +819,7 @@ class TestCustomizationApi:
                 "require_international_roaming": False, "student_eligible": False,
                 "autopay_willing": False, "any_active": False,
             }
-            assert body["pre_filter_candidate_count"] == 24
+            assert body["pre_filter_candidate_count"] == 27
 
     def test_filters_applied_echoes_the_active_customization(self, api):
         _import_v1_dataset(api.session)
@@ -817,7 +855,7 @@ class TestCustomizationApi:
         body = resp.json()
         assert body["results"] == []
         assert body["candidate_count"] == 0
-        assert body["pre_filter_candidate_count"] == 24  # enough metadata for an empty state
+        assert body["pre_filter_candidate_count"] == 27  # enough metadata for an empty state
         assert body["filters_applied"]["max_monthly_price_cad"] == 5
         assert body["filters_applied"]["any_active"] is True
 
