@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 
+from metromobile.models import Plan
 from metromobile.pipeline import run_manual_import
 from metromobile.pricing import price_view
 from metromobile.providers.base import NormalizedPlan
@@ -29,6 +30,7 @@ from metromobile.ranking import (
     STUDENTS,
     CustomFilters,
     RankingContext,
+    _is_student_unlocked,
     data_gb,
     data_score,
     features_score,
@@ -255,6 +257,35 @@ class TestEligibilityGating:
         res = rank_plans(session, STUDENTS, RankingContext(student_eligible=True), NOW, limit=50)
         ids = {r.plan.external_id for r in res.results}
         assert "total-freedom-175gb-roam-beyond-10gb-post-secondary-student-offer" in ids
+
+    def test_koodo_student_deal_excluded_by_default_unlocked_when_eligible(self, session):
+        """koodo-10gb-5g-student-deal: excluded from every default (non-student)
+        ranking, and appears once the user confirms student eligibility -- same
+        contract as the Freedom student variant above."""
+        _import_v1_dataset(session)
+
+        default = rank_plans(session, OVERALL, RankingContext(), NOW, limit=50)
+        assert "koodo-10gb-5g-student-deal" not in {r.plan.external_id for r in default.results}
+
+        unlocked = rank_plans(session, STUDENTS, RankingContext(student_eligible=True), NOW, limit=50)
+        assert "koodo-10gb-5g-student-deal" in {r.plan.external_id for r in unlocked.results}
+
+    def test_student_unlock_comes_from_the_student_offer_flag_not_a_text_search(self):
+        """_is_student_unlocked must key off the explicit student_offer flag --
+        not incidentally off the word "student" appearing somewhere in
+        eligibility_conditions. Proven with a plan whose conditions text
+        contains no such word at all: it must still unlock on the flag alone."""
+        plan = Plan(
+            eligibility_restricted=True,
+            student_offer=True,
+            eligibility_conditions="auto-pay by bank account discount; no matching keyword present here",
+        )
+        assert "student" not in (plan.eligibility_conditions or "").lower()
+        assert _is_student_unlocked(plan) is True
+
+        # a plan that isn't restricted at all never unlocks, flag or no flag
+        not_restricted = Plan(eligibility_restricted=False, student_offer=True)
+        assert _is_student_unlocked(not_restricted) is False
 
     def test_student_ineligible_never_uses_the_discounted_price(self, session):
         _import_v1_dataset(session)
