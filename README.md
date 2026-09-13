@@ -147,7 +147,7 @@ PostgreSQL (Neon)
 
 ## Testing
 
-- Backend: a pytest suite of 188 passing tests, covering the ranking engine,
+- Backend: a pytest suite of 190 passing tests, covering the ranking engine,
   pricing/offer resolution, data pipeline, and API, according to the current
   repository audit.
 - Frontend: Vitest coverage for the supported-municipality logic used by the
