@@ -298,13 +298,17 @@ def _bell_price_dom(card, flag: str) -> dict:
     )
     if kind == "bundle":
         out["bundle_price_cad"] = r0["shown"]
-        conds = ["requires an eligible Crave / Netflix / Disney+ streaming bundle "
-                 "(applied as a $15/mo bill credit; lost if the plan changes)"]
-        if _COND_AUTOPAY.search(cap):
-            conds.append("plus automatic payments (AutoPay)")
-        if _COND_PROMO_CREDIT.search(cap):
-            conds.append("plus Bell's promotional / new-activation eligibility")
-        out["bundle_conditions"] = "; ".join(conds)
+        # Bell's own caption already names whichever credits apply (bundle, and
+        # often AutoPay / promo alongside it) -- read it verbatim rather than
+        # asserting a fixed brand/dollar-amount description that can drift out
+        # of date. Never invent specifics the caption doesn't state; if there's
+        # no caption text at all, point the reviewer at the page's footnote
+        # instead of guessing.
+        cleaned_cap = re.sub(r"\s*footnote \d+.*$", "", cap, flags=re.I).strip()
+        out["bundle_conditions"] = cleaned_cap or (
+            "requires an eligible bundle -- check the page's bundle footnote for "
+            "which subscriptions/services qualify and the credit amount"
+        )
     elif kind == "autopay_promo":
         # AutoPay + promo credit, not separable -> a conditional PROMO price.
         out["promo_price_cad"] = r0["shown"]

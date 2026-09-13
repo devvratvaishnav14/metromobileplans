@@ -75,9 +75,58 @@ def test_two_captures_separate_universal_from_bundle_pricing():
     assert p.get("autopay_price_cad") is None  # AutoPay share not separable
     assert p["promo_price_cad"] == 65.0        # conditional promo (Mobility-only big price)
     assert p["bundle_price_cad"] == 50.0       # streaming tier (With-Streaming big price)
-    assert "streaming bundle" in p["bundle_conditions"]
+    # bundle_conditions is read verbatim from the capture's own caption, not a
+    # fixed brand/dollar-amount assumption -- this is the real text in
+    # fixtures/bell/rendered_plans_streaming.html for this card.
+    assert p["bundle_conditions"] == "When you bundle with streaming. Includes Autopay credit."
+    # the old hardcoded description must never come back, even silently
+    assert "Crave" not in p["bundle_conditions"]
+    assert "Netflix" not in p["bundle_conditions"]
+    assert "Disney" not in p["bundle_conditions"]
     assert m["_draft"]["secondary_capture_file"] == BELL_STREAMING.name
     assert any("confirmed by both" in n for n in p["_review"]["price_notes"])
+
+
+def test_bundle_conditions_use_the_alternate_real_caption_wording():
+    """Bell's own cards don't all share one caption -- a higher tier's bundle
+    credit is captioned differently (it also names the promo credit). Both real
+    captions must pass through untouched, not collapse to one templated string."""
+    m = build_draft_manifest("bell", BELL_MHTML, streaming_capture_path=BELL_STREAMING)
+    p = {x["plan_name"]: x for x in m["plans"]}["Select - 100 GB (with U.S. roaming)"]
+    assert p["bundle_price_cad"] == 55.0
+    assert p["bundle_conditions"] == (
+        "Price includes streaming bundle credit, Autopay credit and promotional credit."
+    )
+    assert "Crave" not in p["bundle_conditions"]
+    assert "Netflix" not in p["bundle_conditions"]
+    assert "Disney" not in p["bundle_conditions"]
+
+
+def test_bundle_conditions_fallback_when_the_caption_is_empty(tmp_path: Path):
+    """If a card's bundle signal comes only from the small-flag (e.g. 'Price
+    with eligible streaming') and its own caption is blank, the drafter must not
+    invent a brand/dollar-amount description -- it should point the reviewer at
+    the page's footnote instead."""
+    html = BELL_STREAMING.read_text().replace(
+        '<div class="g-card-plan__caption same-height">When you bundle with '
+        'streaming. Includes Autopay credit. <sup class="legaltext">footnote 9</sup></div>',
+        '<div class="g-card-plan__caption same-height"></div>',
+    )
+    assert "When you bundle with streaming" not in html  # the replace actually matched
+    f = tmp_path / "bell-empty-caption.html"
+    f.write_text(html)
+
+    m = build_draft_manifest("bell", f)
+    p = {x["plan_name"]: x for x in m["plans"]}["Select - 60 GB"]
+    assert p["bundle_price_cad"] == 50.0
+    assert p["bundle_conditions"] == (
+        "requires an eligible bundle -- check the page's bundle footnote for "
+        "which subscriptions/services qualify and the credit amount"
+    )
+    assert "Crave" not in p["bundle_conditions"]
+    assert "Netflix" not in p["bundle_conditions"]
+    assert "Disney" not in p["bundle_conditions"]
+    assert "$15" not in p["bundle_conditions"]
 
 
 def test_exclusive_partner_offer_is_marked_restricted(tmp_path: Path):
