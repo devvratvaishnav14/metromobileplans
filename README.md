@@ -4,7 +4,7 @@ Metro Mobile Plans is an interactive mobile-plan comparison platform for Metro
 Vancouver. It combines a 3D location-selection experience with a deterministic
 ranking engine built on current verified carrier data.
 
-**Live Website:** https://metro-mobile-plans.vercel.app/
+**Live Website:** https://metromobileplans.vercel.app/
 
 ![Interactive Metro Vancouver map](docs/images/map.png)
 *Interactive Metro Vancouver map*
@@ -221,4 +221,4 @@ boundaries, not approximations. Full details and regeneration instructions:
 **Devvrat Vaishnav**
 BSc Data Science — Simon Fraser University
 
-Live Website: https://metro-mobile-plans.vercel.app/
+Live Website: https://metromobileplans.vercel.app/

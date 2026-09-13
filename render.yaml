@@ -24,7 +24,7 @@
 #   METROMOBILE_HTTP_USER_AGENT  — a descriptive UA + contact, e.g.
 #       "metro-mobile-plans/1.0 (+https://<your-site>; contact: you@example.com)"
 #   METROMOBILE_FRONTEND_ORIGIN  — your Vercel URL(s), comma-separated,
-#       e.g. "https://metro-mobile-plans.vercel.app"
+#       e.g. "https://metromobileplans.vercel.app"
 #   METROMOBILE_DATABASE_URL     — your Neon PostgreSQL connection string.
 #       This is what production actually connects to (see the NOTE above).
 

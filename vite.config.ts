@@ -7,7 +7,7 @@ import { defineConfig, loadEnv } from 'vite'
  * local .env) when the site moves to its own domain; the Vercel URL is the
  * current default. The API base URL is separate — see VITE_API_BASE_URL.
  */
-const DEFAULT_SITE_URL = 'https://metro-mobile-plans.vercel.app'
+const DEFAULT_SITE_URL = 'https://metromobileplans.vercel.app'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
