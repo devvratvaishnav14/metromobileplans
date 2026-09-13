@@ -4,18 +4,23 @@ Data pipeline + API behind the analysis screen:
 
 ```
 official source → fetch → raw document (provenance) → parse → normalize
-             → validate → store (SQLite / PostgreSQL) → /api/plans → frontend
+             → validate → store (SQLite / PostgreSQL) → /api/plans, /api/rank → frontend
 ```
 
-FastAPI · SQLAlchemy 2 · Pydantic · Alembic · httpx · Typer. PostgreSQL is the
-intended target; SQLite is the zero-config local default.
+FastAPI · SQLAlchemy 2 · Pydantic · Alembic · httpx · BeautifulSoup4 · Typer.
+PostgreSQL is the intended target; SQLite is the zero-config local default.
 
 ## Status
 
-**One provider is wired end to end: Chatr Mobile** (`official_automated`). Its 7
-current plans are read from page-embedded JSON on
-<https://www.chatrwireless.com/plans> (plain HTTPS GET, no login, no anti-bot).
-No ranking engine, no other carriers, no Reddit — those are later phases.
+**V1: four providers, all rankable.** Chatr Mobile is `official_automated`
+(fetched from page-embedded JSON on <https://www.chatrwireless.com/plans> —
+plain HTTPS GET, no login, no anti-bot). Bell, Koodo, and Freedom Mobile are
+`official_manual` — an operator captured each carrier's official page and the
+plans were imported with that capture kept as evidence.
+
+A deterministic ranking engine (`ranking.py`) scores every rankable plan across
+6 components under 5 presets — see the root [`README.md`](../README.md) for
+the full product-level explanation of how ranking works.
 
 ### Three source modes
 
@@ -25,10 +30,13 @@ No ranking engine, no other carriers, no Reddit — those are later phases.
 | `official_manual` | official public data a person can view but bots can't | `metromobile import` with a capture + transcribed plans + operator + timestamp | rankable when verified + **within the strict re-verify window**; past it → `stale`, not rankable until re-verified |
 | `trusted_secondary` | reputable third-party aggregator | `metromobile refresh whistleout` (one aggregator adapter emits plans for many carriers), or `metromobile import --mode trusted_secondary` | **never** `verified` or rankable on its own — `secondary_confirmed`, confidence-capped at 0.6; rankable only if an official cross-check exists or `METROMOBILE_SECONDARY_RANKING_ALLOWED=true` |
 
-Connected today: **Chatr** (`official_automated`) and **WhistleOut Canada** (`trusted_secondary`,
-its robots-permitted "popular plans" widget → a rotating handful of plans for
-Bell / Public Mobile / Fido / Chatr / 7-Eleven SpeakOut). Fizz is deliberately
-excluded — its robots.txt blocks AI bots (`ai-train=no`).
+Connected today: **Chatr** (`official_automated`) and **Bell / Koodo / Freedom
+Mobile** (`official_manual`) — together the current V1 dataset. **WhistleOut
+Canada** (`trusted_secondary`, its robots-permitted "popular plans" widget → a
+rotating handful of plans for Bell / Public Mobile / Fido / Chatr / 7-Eleven
+SpeakOut) is implemented and covered by tests but is **not** part of the
+current live V1 dataset. Fizz is deliberately excluded — its robots.txt blocks
+AI bots (`ai-train=no`).
 
 We never bypass Cloudflare, CAPTCHAs, auth, anti-bot, or private APIs. LLMs are
 not a source — they may only normalize text from an identified real source.
@@ -60,6 +68,21 @@ SQLite (default):
 
 PostgreSQL: set `METROMOBILE_DATABASE_URL=postgresql+psycopg://…` in `.env`
 (install a driver, e.g. `pip install "psycopg[binary]"`), then `alembic upgrade head`.
+
+## Reproduce the full V1 dataset
+
+```bash
+.venv/bin/metromobile bootstrap
+```
+
+Idempotently reconciles the database to the approved V1 dataset —
+`fixtures/ranking/v1_dataset.json` — through the normal import pipeline: Bell,
+Koodo, and Freedom Mobile via `official_manual` import, Chatr via an
+`official_automated` refresh of the committed snapshot. Safe to re-run: each
+provider is only (re-)imported if it's missing or short, so it also repairs a
+partially-populated database. This is distinct from `refresh chatr` below,
+which touches only the one provider and is for iterating on the Chatr adapter
+during development.
 
 ## Refresh the data (manual, development)
 
@@ -181,14 +204,18 @@ even if `sweep` hasn't run.
 ```
 
 * `GET /api/plans?municipality=<id>` → `{ meta, plans[], scores[], profiles[] }`
-  (`scores`/`profiles` are still empty — no ranking engine yet). Each plan carries
-  its `source_mode`, `verification_method`, `verified_by`, effective
-  `verification_status` (staleness enforced here), `freshness`, and
-  `verification_event_count`. Plans are national / province-wide; the municipality
-  is echoed back but does not change results, and no location differences are
-  invented.
+  (`scores`/`profiles` are always empty here — ranking is served separately by
+  `/api/rank` below). Each plan carries its `source_mode`, `verification_method`,
+  `verified_by`, effective `verification_status` (staleness enforced here),
+  `freshness`, and `verification_event_count`. Plans are national / province-wide;
+  the municipality is echoed back but does not change results, and no location
+  differences are invented.
+* `GET /api/rank?preset=<preset>&municipality=<id>&...` → a ranked Top-N for
+  one of the 5 presets, with the optional V1 customization filters (budget,
+  min data, plan type, 5G, roaming, student/AutoPay context) applied. See
+  `ranking.py` and the root `README.md` for how scoring works.
 * `GET /api/meta?municipality=<id>` → the `meta` block only (cheap freshness poll).
-* `GET /healthz`
+* `GET /health` (alias: `GET /healthz`)
 
 ## Tests
 
@@ -206,6 +233,10 @@ re-check the field mapping.
 import + immutable evidence, secondary restrictions, manual data going stale and
 losing ranking eligibility, re-verify appending history without overwriting, and
 Chatr staying intact alongside a manual import.
+
+`tests/test_ranking.py` covers the ranking engine (all 5 presets, component
+scoring, customization filters); `tests/test_bootstrap.py` covers `bootstrap`
+reproducing and repairing the approved V1 dataset.
 
 ## Freshness & ranking-eligibility
 
@@ -304,6 +335,7 @@ metromobile/
   pricing.py          price tiers (regular vs autopay vs bundle vs promo) + current-offer logic
   freshness.py        fresh / aging / stale, per source mode
   pipeline.py         run_refresh (automated) · run_manual_import (manual/secondary) · sweep_stale
+  ranking.py          deterministic ranking engine — 5 presets, 6 scored components
   providers/
     base.py           AutomatedAdapter / ManualAdapter / SecondaryAdapter, NormalizedPlan, ParseError
     chatr.py          official_automated adapter (server-rendered JSON)
@@ -315,5 +347,6 @@ metromobile/
   cli.py              `metromobile` commands
 fixtures/chatr/           committed snapshot for the parser test
 fixtures/manual_example/  schema-demo manifest + capture (tests only, NOT a real carrier)
+fixtures/ranking/v1_dataset.json   the reviewed V1 dataset `bootstrap` reconciles the DB to
 raw_store/                immutable fetched documents + manual captures (gitignored)
 ```
