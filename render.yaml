@@ -1,26 +1,39 @@
-# Render Blueprint — backend API + PostgreSQL.
+# Render Blueprint — backend API + a Render-managed PostgreSQL instance.
 # Docs: https://render.com/docs/blueprint-spec
 #
 # The Vite frontend is NOT here — it deploys to Vercel from the repo root.
+#
+# NOTE: production does NOT use the PostgreSQL instance provisioned below.
+# The live metromobile-api service connects to Neon PostgreSQL instead, via a
+# METROMOBILE_DATABASE_URL environment variable set by hand in the Render
+# dashboard (not declared in this file, on purpose — see the env var list
+# below). METROMOBILE_DATABASE_URL takes priority over the DATABASE_URL wired
+# up from `databases:` below (see the AliasChoices order in
+# metromobile/config.py), so that wiring is currently unused rather than
+# authoritative. Left in place rather than removed, to avoid touching a
+# working deployment.
 #
 # Chatr is refreshed on every redeploy (see the web service's startCommand).
 # To keep it fresh between deploys, add a Render Cron Job running
 # `python -m metromobile refresh chatr` (rootDir: backend) once a paid
 # workspace is available — Render cron jobs have no free plan.
 #
-# After Render provisions this, set these two "sync: false" env vars on the
-# metromobile-api service in the dashboard:
+# After Render provisions this, set these env vars by hand on the
+# metromobile-api service in the dashboard (the first two as "sync: false"
+# below; the third is intentionally not declared in this file at all):
 #   METROMOBILE_HTTP_USER_AGENT  — a descriptive UA + contact, e.g.
 #       "metro-mobile-plans/1.0 (+https://<your-site>; contact: you@example.com)"
 #   METROMOBILE_FRONTEND_ORIGIN  — your Vercel URL(s), comma-separated,
 #       e.g. "https://metro-mobile-plans.vercel.app"
+#   METROMOBILE_DATABASE_URL     — your Neon PostgreSQL connection string.
+#       This is what production actually connects to (see the NOTE above).
 
 databases:
   - name: metromobile-db
     databaseName: metromobile
     user: metromobile
-    plan: free            # NOTE: Render free PostgreSQL is deleted after 30 days.
-    region: oregon        #       Upgrade to a paid plan to keep the site up.
+    plan: free            # NOTE: provisioned by this Blueprint but NOT the production
+    region: oregon        #       database — production runs on Neon (see header comment).
 
 services:
   - type: web
@@ -43,6 +56,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.7"
+      # Wired to the databases: block above; production ignores this in favor
+      # of the hand-set METROMOBILE_DATABASE_URL (Neon) — see header comment.
       - key: DATABASE_URL
         fromDatabase:
           name: metromobile-db

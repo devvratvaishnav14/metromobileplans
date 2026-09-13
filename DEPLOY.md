@@ -6,8 +6,12 @@ Architecture:
 |---|---|---|
 | Frontend (Vite SPA) | **Vercel** | repo root |
 | Backend API (FastAPI) | **Render** web service | `backend/` |
-| Database | **Render** PostgreSQL | — |
-| Chatr refresh | **Render** cron (every 4h) | `backend/` |
+| Database | **Neon** PostgreSQL | — |
+| Chatr refresh | on every backend redeploy (no cron) | `backend/` |
+
+Production's database connection comes from `METROMOBILE_DATABASE_URL`, a Neon
+connection string set by hand as an environment variable on the Render web
+service — it is not provisioned by `render.yaml` (see §2).
 
 Bell / Koodo / Freedom stay `official_manual` (imported from the reviewed
 `backend/fixtures/ranking/v1_dataset.json`). Only Chatr is `official_automated`.
@@ -25,23 +29,28 @@ git remote add origin git@github.com:<you>/metro-mobile-plans.git
 git push -u origin main
 ```
 
-Keep it **private** unless you decide otherwise — the repo contains the
-reviewed plan dataset but no secrets or raw carrier captures (those are
-git-ignored).
+The repo contains the reviewed plan dataset but no secrets or raw carrier
+captures (those are git-ignored).
 
-## 2. Render — database + API + cron (Blueprint)
+## 2. Render — API (Blueprint)
 
-`render.yaml` at the repo root defines everything.
+`render.yaml` at the repo root defines the backend web service. It also
+provisions a Render-managed PostgreSQL instance, but **production does not use
+it** — see the database note below.
 
 1. render.com → **New → Blueprint** → connect the GitHub repo.
-2. Render shows: 1 PostgreSQL, 1 web service (`metromobile-api`), 1 cron
-   (`metromobile-chatr-refresh`). Approve.
-3. On **both** `metromobile-api` and `metromobile-chatr-refresh`, set:
+2. Render shows: 1 PostgreSQL, 1 web service (`metromobile-api`). Approve.
+3. On `metromobile-api`, set:
    - `METROMOBILE_HTTP_USER_AGENT` = e.g.
      `metro-mobile-plans/1.0 (+https://<your-site>; contact: you@example.com)`
-4. On `metromobile-api` only, set (fill in after step 3 of §3):
-   - `METROMOBILE_FRONTEND_ORIGIN` = your Vercel URL(s), comma-separated.
-5. First deploy runs: `alembic upgrade head` → `metromobile bootstrap`
+   - `METROMOBILE_FRONTEND_ORIGIN` = your Vercel URL(s), comma-separated
+     (fill in after step 3 of §3).
+   - `METROMOBILE_DATABASE_URL` = your Neon PostgreSQL connection string.
+     Not declared in `render.yaml` — set it by hand. It takes priority over
+     the Blueprint-injected `DATABASE_URL` (see `metromobile/config.py`),
+     which is how production runs on Neon instead of the Render-provisioned
+     Postgres instance below.
+4. First deploy runs: `alembic upgrade head` → `metromobile bootstrap`
    (reproduces the 26 verified / 24 rankable V1 dataset) → `uvicorn`.
    Watch the deploy log — bootstrap prints the plan counts and fails the
    deploy if they drift.
@@ -49,9 +58,18 @@ git-ignored).
 Backend URL will be `https://metromobile-api.onrender.com` (or similar).
 Health check: `GET /health`.
 
-**Free-tier caveats:** the web service sleeps after 15 min idle (cold start
-~30–50 s); the free PostgreSQL is **deleted after 30 days** — upgrade the DB
-to a paid plan to keep the site up.
+**Database:** production runs on **Neon** PostgreSQL, connected via the
+hand-set `METROMOBILE_DATABASE_URL` above. The `databases:` block in
+`render.yaml` still provisions a separate Render-managed PostgreSQL instance —
+it is left in place because it's part of a working deployment, but it is not
+the production database and is currently unused.
+
+**Chatr refresh:** there is no scheduled cron. Chatr's plans refresh once on
+every backend redeploy, as part of the web service's `startCommand`.
+
+**Free-tier caveats:** the Render web service sleeps after 15 min idle (cold
+start ~30–50 s). Neon's free tier and Render's free-tier Postgres each have
+their own separate limits — check current terms for whichever you rely on.
 
 ## 3. Vercel — frontend
 
@@ -62,7 +80,7 @@ to a paid plan to keep the site up.
    - `VITE_API_BASE_URL` = the Render backend URL from §2 (no trailing slash),
      e.g. `https://metromobile-api.onrender.com`
 4. Deploy. Then copy the Vercel production URL back into
-   `METROMOBILE_FRONTEND_ORIGIN` on the Render web service (§2 step 4) and
+   `METROMOBILE_FRONTEND_ORIGIN` on the Render web service (§2 step 3) and
    redeploy the backend so CORS allows it.
 
 ## 4. Verify (curl, no browser)
@@ -101,4 +119,5 @@ npm install && npm run dev                 # http://localhost:5173
 Bell / Koodo / Freedom captures go stale after `METROMOBILE_MANUAL_REVERIFY_HOURS`
 (180 days in production). Before then, re-capture each carrier's plans page and
 run `metromobile reverify --manifest … --capture … --operator …` against the
-production `DATABASE_URL`, or they drop out of the rankings.
+production database (Neon, via `METROMOBILE_DATABASE_URL`), or they drop out
+of the rankings.
