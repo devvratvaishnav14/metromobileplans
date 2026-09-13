@@ -96,6 +96,9 @@ export function priceDisplay(r: RankedPlan): PriceDisplay {
     disclosures.push(
       `As low as ${money(t.amount)}/mo ${tierConditionPhrase(t.label, t.conditions)}`,
     )
+    disclosures.push(
+      "Regular price shown by default — conditions like this aren't assumed.",
+    )
   }
 
   return { amount: money(used ?? 0), unit: '/mo', qualifier: null, disclosures }
