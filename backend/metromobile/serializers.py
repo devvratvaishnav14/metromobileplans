@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .config import get_settings
-from .freshness import STALE, freshness_state, humanize_age
+from .freshness import AGING, FRESH, STALE, freshness_state, humanize_age
 from .models import Plan, Provider, RefreshRun
 from .pricing import price_view
 from .schemas import MetaOut, PlanIssueOut, PlanOut, PlansResponse, ProviderOut
@@ -25,6 +25,9 @@ _MODE_LABEL = {
     "official_manual": "Official source, manually verified",
     "trusted_secondary": "Trusted third-party source",
 }
+
+# worst (least fresh) wins when rolling per-plan freshness up into one overall value
+_FRESHNESS_SEVERITY = {FRESH: 0, AGING: 1, STALE: 2}
 
 
 def effective_state(plan: Plan, now: dt.datetime) -> tuple[str, str, bool]:
@@ -101,8 +104,24 @@ def _sort_key(p: PlanOut) -> tuple:
     return (0 if price is not None else 1, price or 0.0, p.plan_name or "")
 
 
+def _overall_freshness(states: dict[int, tuple[str, str, bool]]) -> str | None:
+    """Roll up the per-plan (source-mode-aware) freshness values already computed
+    in ``states`` into a single worst-case label.
+
+    This must NOT re-derive freshness from a raw timestamp: a manually verified
+    plan is legitimately "fresh" for weeks under its own re-verify window, but
+    judging that same timestamp against the automated-source default window
+    (hours, not weeks) would wrongly report the whole catalogue "stale" even
+    though every individual plan is current. Reusing ``states`` guarantees this
+    always matches each plan's own ``freshness_label``.
+    """
+    freshness_values = [freshness for freshness, _status, _rankable in states.values()]
+    if not freshness_values:
+        return None
+    return max(freshness_values, key=lambda f: _FRESHNESS_SEVERITY[f])
+
+
 def build_meta(session: Session, municipality: str | None, now: dt.datetime) -> MetaOut:
-    settings = get_settings()
     providers = session.scalars(select(Provider)).all()
     plans = session.scalars(select(Plan)).all()
 
@@ -116,7 +135,7 @@ def build_meta(session: Session, municipality: str | None, now: dt.datetime) -> 
     )
     last_refreshed = last_run.finished_at if last_run else None
 
-    overall = freshness_state(oldest, now=now, settings=settings) if oldest else None
+    overall = _overall_freshness(states)
     label = (
         f"Current plan data · last refreshed {humanize_age(last_refreshed, now=now)}"
         if last_refreshed
