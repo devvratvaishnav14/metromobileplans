@@ -107,6 +107,22 @@ export function RankedPlanCard({ ranked, preset }: Props) {
         </div>
       </div>
 
+      {/* The card's headline price is a standalone AutoPay / Digital Discount
+          price -- call out the regular price plainly so it's never mistaken
+          for the price shown. On Best Current Offers the offer block below
+          already states this same comparison, so it isn't repeated here. */}
+      {price.regularPriceCompare && !offer && (
+        <p className="rank-card__price-compare">
+          <span className="rank-card__price-compare-label">Regular price:</span>{' '}
+          <span className="rank-card__price-compare-amount">
+            {price.regularPriceCompare.amount}
+          </span>{' '}
+          <span className="rank-card__price-compare-note">
+            {price.regularPriceCompare.note}
+          </span>
+        </p>
+      )}
+
       {/* On Best Current Offers the offer block below already states the
           regular → applicable price and its conditions, so the generic
           "as low as" tier line would just repeat it. */}

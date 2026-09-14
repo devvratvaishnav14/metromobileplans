@@ -782,6 +782,29 @@ code {
   color: #7ee0a6;
 }
 
+/* A dedicated, higher-contrast row for the regular price behind a standalone
+   AutoPay / Digital Discount price -- deliberately stronger than the generic
+   .rank-card__disclosures line below (bolder value, bordered pill) so the two
+   prices being compared are obvious at a glance, without reading as a warning. */
+.rank-card__price-compare {
+  margin: 12px 0 0;
+  padding: 6px 10px;
+  background: #101826;
+  border: 1px solid #263449;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.rank-card__price-compare-label { color: #9fb2cc; }
+.rank-card__price-compare-amount {
+  font-weight: 700;
+  color: #dbe6f7;
+  text-decoration: line-through;
+  text-decoration-color: #4a5c7c;
+  text-decoration-thickness: 1.5px;
+}
+.rank-card__price-compare-note { color: #9fb2cc; }
+
 .rank-card__disclosures {
   margin: 12px 0 0;
   padding: 0;

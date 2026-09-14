@@ -43,6 +43,13 @@ function tierConditionPhrase(label: string, conditions: string[]): string {
   return `(${label})`
 }
 
+export interface PriceCompare {
+  /** e.g. "$55/mo". */
+  amount: string
+  /** e.g. "without Digital Discount". */
+  note: string
+}
+
 export interface PriceDisplay {
   /** The prominent number, e.g. "$13.25". */
   amount: string
@@ -52,6 +59,15 @@ export interface PriceDisplay {
   qualifier: string | null
   /** Honest secondary lines shown under the price. */
   disclosures: string[]
+  /**
+   * Set only when a broadly-available, standalone AutoPay / Digital Discount
+   * price is the displayed price. Rendered as its own, more visible
+   * price-comparison row rather than folded into `disclosures` -- the
+   * regular price a user would actually pay without it should never be easy
+   * to miss. Restricted/targeted tiers (student, bundle, etc.) keep using the
+   * plain `disclosures` line and never set this.
+   */
+  regularPriceCompare: PriceCompare | null
 }
 
 /**
@@ -73,6 +89,7 @@ export function priceDisplay(r: RankedPlan): PriceDisplay {
       unit: '/mo',
       qualifier: 'equivalent',
       disclosures,
+      regularPriceCompare: null,
     }
   }
 
@@ -86,23 +103,26 @@ export function priceDisplay(r: RankedPlan): PriceDisplay {
       unit: '/mo',
       qualifier: 'Eligible student price',
       disclosures,
+      regularPriceCompare: null,
     }
   }
 
   // Broadly-available AutoPay / Digital Discount pricing is on by default (see
   // RankingContext.autopay_willing) -- the discounted price is the headline,
-  // and the regular price is the secondary disclosure, matching how the
-  // carrier itself advertises the plan.
+  // and the regular price is surfaced as its own, more visible comparison row
+  // (not a generic disclosure) so it's never easy to miss which price is
+  // "with" and which is "without" -- matching how the carrier itself
+  // advertises the plan.
   const isAutopayPrice = r.applicable_tier_label === 'with AutoPay'
   if (isAutopayPrice && used != null && reference != null) {
     const tier = r.plan.price_tiers.find((t) => t.label === 'with AutoPay')
     const noun = autopayNoun(tier?.conditions ?? [])
-    disclosures.push(`Regular price ${money(reference)}/mo without ${noun}`)
     return {
       amount: money(used),
       unit: '/mo',
       qualifier: tierConditionPhrase('with AutoPay', tier?.conditions ?? []),
       disclosures,
+      regularPriceCompare: { amount: `${money(reference)}/mo`, note: `without ${noun}` },
     }
   }
 
@@ -123,7 +143,13 @@ export function priceDisplay(r: RankedPlan): PriceDisplay {
     }
   }
 
-  return { amount: money(used ?? 0), unit: '/mo', qualifier: null, disclosures }
+  return {
+    amount: money(used ?? 0),
+    unit: '/mo',
+    qualifier: null,
+    disclosures,
+    regularPriceCompare: null,
+  }
 }
 
 export interface ComponentRow {
