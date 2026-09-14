@@ -799,9 +799,6 @@ code {
 .rank-card__price-compare-amount {
   font-weight: 700;
   color: #dbe6f7;
-  text-decoration: line-through;
-  text-decoration-color: #4a5c7c;
-  text-decoration-thickness: 1.5px;
 }
 .rank-card__price-compare-note { color: #9fb2cc; }
 
