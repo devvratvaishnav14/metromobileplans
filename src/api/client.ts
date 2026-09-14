@@ -91,7 +91,11 @@ export async function fetchRanking(
   if (c.require_can_us_mex) url.searchParams.set('require_can_us_mex', 'true')
   if (c.require_international_roaming)
     url.searchParams.set('require_international_roaming', 'true')
-  if (c.autopay_willing) url.searchParams.set('autopay_willing', 'true')
+  // The backend defaults autopay_willing to true (broadly-available AutoPay /
+  // Digital Discount pricing shown by default), so an explicit opt-out must
+  // be sent as `false` — omitting it entirely would fall back to the default.
+  if (c.autopay_willing != null)
+    url.searchParams.set('autopay_willing', c.autopay_willing ? 'true' : 'false')
   // `student_eligible` stays driven by the explicit `studentEligible` arg above.
 
   let res: Response

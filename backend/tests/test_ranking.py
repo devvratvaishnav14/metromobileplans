@@ -317,15 +317,71 @@ class TestBestCurrentOffersCandidatePool:
 
 
 class TestAutopayContext:
-    def test_autopay_willing_swaps_price_for_autopay_only_plans(self, session):
+    def test_default_context_already_uses_the_autopay_price(self, session):
+        """autopay_willing defaults True: a broadly-available, standalone AutoPay
+        / Digital Discount price (Freedom's own advertised headline price) is
+        the default consumer-facing price with no customization at all."""
         _import_v1_dataset(session)
         default = _by_id(rank_plans(session, OVERALL, RankingContext(), NOW, limit=50))
-        willing = _by_id(rank_plans(session, OVERALL, RankingContext(autopay_willing=True), NOW, limit=50))
         plan_id = "total-freedom-175gb-roam-beyond-10gb"
-        assert default[plan_id].price_used_cad == 55.0
-        assert willing[plan_id].price_used_cad == 50.0
-        # confirming autopay willingness must not change the fixed Offer reference
-        assert willing[plan_id].regular_reference_price_cad == 55.0
+        assert default[plan_id].price_used_cad == 50.0
+        assert default[plan_id].applicable_tier_label == "with AutoPay"
+        # confirming AutoPay must not change the fixed Offer reference
+        assert default[plan_id].regular_reference_price_cad == 55.0
+
+    def test_opting_out_of_autopay_returns_the_regular_price(self, session):
+        _import_v1_dataset(session)
+        opted_out = _by_id(
+            rank_plans(session, OVERALL, RankingContext(autopay_willing=False), NOW, limit=50)
+        )
+        plan_id = "total-freedom-175gb-roam-beyond-10gb"
+        assert opted_out[plan_id].price_used_cad == 55.0
+        assert opted_out[plan_id].applicable_tier_label is None
+        assert opted_out[plan_id].regular_reference_price_cad == 55.0
+
+
+class TestAutopayScopeStaysNarrow:
+    """The default only ever swaps in a standalone `autopay_price_cad` (see
+    `_is_autopay_only_conditional`). Bell's bundle/promo pricing and Koodo's
+    lumped, non-itemized promo pricing must be completely unaffected by this
+    default, whether or not the user opts out."""
+
+    def test_bell_bundle_and_promo_pricing_is_never_swapped_by_the_default(self, session):
+        _import_v1_dataset(session)
+        default = _by_id(rank_plans(session, OVERALL, RankingContext(), NOW, limit=50))
+        opted_out = _by_id(
+            rank_plans(session, OVERALL, RankingContext(autopay_willing=False), NOW, limit=50)
+        )
+        bell_ids = [ext_id for ext_id, r in default.items() if r.plan.provider_slug == "bell"]
+        assert bell_ids  # sanity: Bell plans are actually in the pool
+        for ext_id in bell_ids:
+            assert default[ext_id].applicable_tier_label != "with AutoPay"
+            assert default[ext_id].price_used_cad == opted_out[ext_id].price_used_cad
+
+    def test_koodo_promo_pricing_is_never_swapped_by_the_default(self, session):
+        """Koodo's discount lives in promo_price_cad (its own page never itemizes
+        an AutoPay-only share), so it can never satisfy
+        `_is_autopay_only_conditional` and must stay untouched by this default."""
+        _import_v1_dataset(session)
+        default = _by_id(rank_plans(session, OVERALL, RankingContext(), NOW, limit=50))
+        opted_out = _by_id(
+            rank_plans(session, OVERALL, RankingContext(autopay_willing=False), NOW, limit=50)
+        )
+        koodo_ids = [ext_id for ext_id, r in default.items() if r.plan.provider_slug == "koodo"]
+        assert koodo_ids  # sanity: Koodo plans are actually in the pool
+        for ext_id in koodo_ids:
+            assert default[ext_id].applicable_tier_label != "with AutoPay"
+            assert default[ext_id].price_used_cad == opted_out[ext_id].price_used_cad
+
+    def test_restricted_student_pricing_still_requires_confirmed_eligibility(self, session):
+        """The autopay default must not leak into student/restricted gating --
+        the restricted Freedom student-offer plan stays excluded from every
+        default ranking regardless of autopay_willing."""
+        _import_v1_dataset(session)
+        res = rank_plans(session, OVERALL, RankingContext(), NOW, limit=50)
+        ids = {r.plan.external_id for r in res.results}
+        assert "total-freedom-175gb-roam-beyond-10gb-post-secondary-student-offer" not in ids
+        assert "koodo-10gb-5g-student-deal" not in ids
 
 
 # =====================================================================
@@ -417,8 +473,12 @@ class TestApprovedSimulationRegression:
             "total-freedom-250gb-roam-beyond-20gb",
         ]
         assert all(r.plan.provider_slug == "freedom-mobile" for r in res.results)
+        # Scores updated 2026-09-13: autopay_willing now defaults True, so every
+        # Freedom plan here ranks on its $5/mo-cheaper AutoPay / Digital Discount
+        # price by default -- order is unchanged (Freedom already swept this
+        # preset), but every score rose accordingly.
         scores = [r.final_score for r in res.results]
-        assert scores == pytest.approx([75.63, 75.43, 74.48, 74.04, 71.57], abs=0.01)
+        assert scores == pytest.approx([77.25, 77.07, 76.08, 75.7, 73.14], abs=0.01)
 
     def test_cheapest_top5(self, session):
         _import_v1_dataset(session)
@@ -452,12 +512,17 @@ class TestApprovedSimulationRegression:
         _import_v1_dataset(session)
         res = rank_plans(session, OFFERS, RankingContext(), NOW, limit=5)
         ids = [r.plan.external_id for r in res.results]
+        # Order updated 2026-09-13: autopay_willing now defaults True, which
+        # raises `_condition_ease` for the "with AutoPay" tier from 0.90 to
+        # 1.00 (see offer_score / _condition_ease) -- enough to move all three
+        # Freedom AutoPay offers ahead of both Bell bundle/promo offers, which
+        # are untouched by this default.
         assert ids == [
-            "bell-ultra-unlimited-with-u-s-mexico-roaming",
-            "bell-select-100-gb-with-u-s-roaming",
             "total-freedom-70gb-roam-beyond-1gb",
             "total-freedom-125gb-roam-beyond-5gb",
             "total-freedom-175gb-roam-beyond-10gb",
+            "bell-ultra-unlimited-with-u-s-mexico-roaming",
+            "bell-select-100-gb-with-u-s-roaming",
         ]
         providers = {r.plan.provider_slug for r in res.results}
         assert providers == {"bell", "freedom-mobile"}   # no provider-diversity manipulation needed
@@ -503,8 +568,12 @@ class TestApprovedSimulationRegression:
             "total-freedom-70gb-roam-beyond-1gb",
             "total-freedom-250gb-roam-beyond-10gb",
         ]
+        # Scores updated 2026-09-13: autopay_willing now defaults True, so the
+        # 4 non-restricted Freedom plans here also pick up their AutoPay /
+        # Digital Discount price by default (the #1 slot is unaffected -- it's
+        # already priced via the student-promo path, which takes priority).
         scores = [r.final_score for r in res.results]
-        assert scores == pytest.approx([77.58, 71.09, 70.69, 70.52, 68.66], abs=0.01)
+        assert scores == pytest.approx([77.58, 73.1, 72.67, 72.56, 70.6], abs=0.01)
 
 
 # =====================================================================
@@ -532,11 +601,11 @@ _APPROVED_TOP5 = {
         "total-freedom-250gb-roam-beyond-30gb",
     ],
     OFFERS: [
-        "bell-ultra-unlimited-with-u-s-mexico-roaming",
-        "bell-select-100-gb-with-u-s-roaming",
         "total-freedom-70gb-roam-beyond-1gb",
         "total-freedom-125gb-roam-beyond-5gb",
         "total-freedom-175gb-roam-beyond-10gb",
+        "bell-ultra-unlimited-with-u-s-mexico-roaming",
+        "bell-select-100-gb-with-u-s-roaming",
     ],
 }
 
@@ -817,7 +886,10 @@ class TestCustomizationApi:
                 "max_monthly_price_cad": None, "min_data_gb": None, "plan_type": None,
                 "require_5g": False, "require_can_us_mex": False,
                 "require_international_roaming": False, "student_eligible": False,
-                "autopay_willing": False, "any_active": False,
+                # autopay_willing defaults True with no params at all -- the
+                # broadly-available AutoPay / Digital Discount price is the
+                # default consumer-facing price.
+                "autopay_willing": True, "any_active": False,
             }
             assert body["pre_filter_candidate_count"] == 27
 
@@ -859,10 +931,10 @@ class TestCustomizationApi:
         assert body["filters_applied"]["max_monthly_price_cad"] == 5
         assert body["filters_applied"]["any_active"] is True
 
-    def test_autopay_willing_is_exposed_and_defaults_false(self, api):
+    def test_autopay_willing_is_exposed_and_defaults_true(self, api):
         _import_v1_dataset(api.session)
-        assert api.client.get("/api/rank?preset=overall").json()["autopay_willing"] is False
+        assert api.client.get("/api/rank?preset=overall").json()["autopay_willing"] is True
         assert (
-            api.client.get("/api/rank?preset=overall&autopay_willing=true").json()["autopay_willing"]
-            is True
+            api.client.get("/api/rank?preset=overall&autopay_willing=false").json()["autopay_willing"]
+            is False
         )

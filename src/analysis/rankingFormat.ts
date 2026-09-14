@@ -28,14 +28,17 @@ export function shortDataLabel(plan: Plan): string {
   return 'Data amount not stated'
 }
 
-function tierConditionPhrase(label: string, conditions: string[]): string {
+/** "Digital Discount" for carriers (Freedom) that brand their AutoPay
+ *  discount, otherwise the generic "AutoPay". Shared by the qualifier phrase
+ *  below and the regular-price disclosure in `priceDisplay`. */
+function autopayNoun(conditions: string[]): string {
   const text = conditions.join(' ').toLowerCase()
+  return text.includes('digital discount') ? 'Digital Discount' : 'AutoPay'
+}
+
+function tierConditionPhrase(label: string, conditions: string[]): string {
   if (label === 'with bundle') return 'with a qualifying bundle'
-  if (label === 'with AutoPay') {
-    return text.includes('digital discount')
-      ? 'with the Digital Discount'
-      : 'with AutoPay'
-  }
+  if (label === 'with AutoPay') return `with ${autopayNoun(conditions)}`
   if (label === 'promotional') return 'with promotional pricing'
   return `(${label})`
 }
@@ -86,6 +89,23 @@ export function priceDisplay(r: RankedPlan): PriceDisplay {
     }
   }
 
+  // Broadly-available AutoPay / Digital Discount pricing is on by default (see
+  // RankingContext.autopay_willing) -- the discounted price is the headline,
+  // and the regular price is the secondary disclosure, matching how the
+  // carrier itself advertises the plan.
+  const isAutopayPrice = r.applicable_tier_label === 'with AutoPay'
+  if (isAutopayPrice && used != null && reference != null) {
+    const tier = r.plan.price_tiers.find((t) => t.label === 'with AutoPay')
+    const noun = autopayNoun(tier?.conditions ?? [])
+    disclosures.push(`Regular price ${money(reference)}/mo without ${noun}`)
+    return {
+      amount: money(used),
+      unit: '/mo',
+      qualifier: tierConditionPhrase('with AutoPay', tier?.conditions ?? []),
+      disclosures,
+    }
+  }
+
   // A regular ranking price is being used — surface any cheaper conditional tier
   // as a secondary "as low as" line so the condition is never hidden.
   const cheaper = r.plan.price_tiers
@@ -96,9 +116,11 @@ export function priceDisplay(r: RankedPlan): PriceDisplay {
     disclosures.push(
       `As low as ${money(t.amount)}/mo ${tierConditionPhrase(t.label, t.conditions)}`,
     )
-    disclosures.push(
-      "Regular price shown by default — conditions like this aren't assumed.",
-    )
+    if (t.label !== 'with AutoPay') {
+      disclosures.push(
+        "Regular price shown by default — conditions like this aren't assumed.",
+      )
+    }
   }
 
   return { amount: money(used ?? 0), unit: '/mo', qualifier: null, disclosures }

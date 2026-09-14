@@ -69,13 +69,27 @@ def _clamp(v: float, lo: float = 0.0, hi: float = 1.0) -> float:
 
 @dataclass(frozen=True)
 class RankingContext:
-    """User-confirmed eligibility / preference flags. Both default False --
-    never inferred from which preset was picked. New eligibility/preference
-    flags belong here; nothing in the scoring functions below should need to
-    change shape when one is added."""
+    """User-confirmed eligibility / preference flags.
+
+    `student_eligible` defaults False -- restricted, targeted, or partner/
+    employer-gated pricing (student offers, Bell bundles, etc.) is never
+    inferred from which preset was picked, only from explicit confirmation.
+
+    `autopay_willing` defaults True. A standalone AutoPay / Digital Discount
+    price (see `_is_autopay_only_conditional`) is broadly available to any
+    customer who enrolls -- it isn't restricted, targeted, or eligibility-
+    gated -- so it is used as the default consumer-facing price, matching how
+    the carriers themselves headline it. Users who don't want AutoPay opt out
+    explicitly and see regular pricing instead. This flag has no effect on
+    plans that don't clear `_is_autopay_only_conditional` (e.g. Bell bundle/
+    promo pricing, Koodo's non-itemized promo pricing) -- those stay gated
+    behind their own eligibility checks regardless of this default.
+
+    New eligibility/preference flags belong here; nothing in the scoring
+    functions below should need to change shape when one is added."""
 
     student_eligible: bool = False
-    autopay_willing: bool = False
+    autopay_willing: bool = True
     municipality: str | None = None  # accepted, currently has zero scoring effect
 
 
@@ -176,8 +190,12 @@ def _tier_monthly_equivalent(amount: float | None, plan: Plan) -> float | None:
 
 def _is_autopay_only_conditional(plan: Plan) -> bool:
     """True if AutoPay is the plan's ONLY conditional tier (no bundle, no promo)
-    -- the one case where `autopay_willing=True` alone is enough to swap the
-    price used for ranking. Mixed tiers stay conditional-only (see design §8)."""
+    -- the one case where `autopay_willing` (default True) alone is enough to
+    swap the price used for ranking, because it means the carrier's own page
+    itemizes AutoPay as a standalone, broadly-available discount rather than
+    mixing it into a targeted promo or bundle rate. Mixed tiers, and provider
+    data that only records a lumped `promo_price_cad` (e.g. Koodo, Bell),
+    never satisfy this and stay conditional-only (see design §8)."""
     return (
         plan.autopay_price_cad is not None
         and plan.bundle_price_cad is None

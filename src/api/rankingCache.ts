@@ -40,7 +40,10 @@ export function rankingKey(p: RankingParams): string {
     Boolean(c.require_5g),
     Boolean(c.require_can_us_mex),
     Boolean(c.require_international_roaming),
-    Boolean(c.autopay_willing),
+    // autopay_willing defaults to true server-side, so an omitted value (the
+    // map's prefetch) and an explicit `true` (AnalysisView's initial state)
+    // must hash to the same key — only an explicit opt-out (`false`) differs.
+    c.autopay_willing !== false,
   ])
 }
 

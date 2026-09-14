@@ -274,8 +274,8 @@ export function CustomizePanel({
           <CheckRow
             checked={draft.autopayWilling}
             onChange={(v) => onChange({ autopayWilling: v })}
-            label="I'm willing to use AutoPay / pre-authorized payments"
-            help="May unlock verified lower prices where the carrier offers a separately identifiable AutoPay discount. Not every carrier has one."
+            label="Use AutoPay / Digital Discount pricing"
+            help="On by default: shows the carrier's advertised AutoPay / Digital Discount price where one is separately identified. Not every carrier has one. Uncheck to rank and display regular prices only."
           />
         </fieldset>
       </div>

@@ -20,6 +20,8 @@ export interface Customization {
   requireInternationalRoaming: boolean
   /** Confirmed user context — never inferred from the selected preset. */
   studentEligible: boolean
+  /** Default true: broadly-available AutoPay / Digital Discount pricing is
+   *  used unless the user explicitly opts out to see regular prices only. */
   autopayWilling: boolean
 }
 
@@ -31,7 +33,7 @@ export const EMPTY_CUSTOMIZATION: Customization = {
   requireCanUsMex: false,
   requireInternationalRoaming: false,
   studentEligible: false,
-  autopayWilling: false,
+  autopayWilling: true,
 }
 
 /** Quick-choice values offered in the panel (plus "Any" and "Custom"). */
@@ -47,7 +49,8 @@ export function customizationIsActive(c: Customization): boolean {
     c.requireCanUsMex ||
     c.requireInternationalRoaming ||
     c.studentEligible ||
-    c.autopayWilling
+    // autopayWilling defaults true — only opting OUT is a customization.
+    !c.autopayWilling
   )
 }
 
@@ -118,7 +121,11 @@ export function customizationChips(c: Customization): CustomizationChip[] {
     chips.push({ key: 'requireInternationalRoaming', label: 'International roaming' })
   if (c.studentEligible)
     chips.push({ key: 'studentEligible', label: 'Student eligible' })
-  if (c.autopayWilling) chips.push({ key: 'autopayWilling', label: 'AutoPay' })
+  // autopayWilling defaults true; the chip represents the non-default,
+  // opted-out state, matching how every other chip only appears when it
+  // changes the result from the default ranking.
+  if (!c.autopayWilling)
+    chips.push({ key: 'autopayWilling', label: 'Regular price only' })
   return chips
 }
 
@@ -134,6 +141,10 @@ export function clearCustomizationField(
       return { ...c, minDataGb: null }
     case 'planType':
       return { ...c, planType: 'any' }
+    case 'autopayWilling':
+      // Its chip only appears when opted out (false) — clearing it restores
+      // the default (true), not false like the other boolean toggles.
+      return { ...c, autopayWilling: true }
     default:
       return { ...c, [key]: false }
   }

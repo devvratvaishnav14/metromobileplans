@@ -69,7 +69,10 @@ def get_ranking(
     preset: str = Query(default="overall"),
     municipality: str | None = Query(default=None),
     student_eligible: bool = Query(default=False),
-    autopay_willing: bool = Query(default=False),
+    # Broadly-available AutoPay / Digital Discount pricing (see
+    # `_is_autopay_only_conditional`) is used by default; pass
+    # autopay_willing=false explicitly to opt out and see regular pricing.
+    autopay_willing: bool = Query(default=True),
     # --- V1 customization: optional hard filters (all default = no change) ---
     max_monthly_price_cad: float | None = Query(default=None, gt=0),
     min_data_gb: float | None = Query(default=None, ge=0),

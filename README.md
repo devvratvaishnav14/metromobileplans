@@ -65,9 +65,13 @@ balances all six.
 Annual plans are converted to a monthly-equivalent price for fair comparison,
 while the actual upfront payment and billing term are still shown in full.
 
-Conditional pricing — such as student pricing or an AutoPay discount — is only
-applied once the user explicitly confirms they meet that condition. Otherwise,
-the plan's regular, unconditional price is used.
+A broadly-available AutoPay / Digital Discount price — one a carrier itemizes
+as its own advertised price, open to any customer who enrolls — is used by
+default, with the regular price shown as secondary information; users can opt
+out to rank on regular prices only. Restricted or targeted conditional pricing
+— such as student pricing, Bell bundle pricing, or other partner/employer
+eligibility — is only applied once the user explicitly confirms they meet that
+condition. Otherwise, the plan's regular, unconditional price is used.
 
 The selected municipality currently provides context only and does not change
 the ranking. The project does not fabricate municipality-specific network
@@ -147,7 +151,7 @@ PostgreSQL (Neon)
 
 ## Testing
 
-- Backend: a pytest suite of 193 passing tests, covering the ranking engine,
+- Backend: a pytest suite of 197 passing tests, covering the ranking engine,
   pricing/offer resolution, data pipeline, and API, according to the current
   repository audit.
 - Frontend: Vitest coverage for the supported-municipality logic used by the
