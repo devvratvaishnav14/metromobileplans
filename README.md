@@ -222,7 +222,6 @@ boundaries, not approximations. Full details and regeneration instructions:
 
 ## Author
 
-**Devvrat Vaishnav**
-BSc Data Science — Simon Fraser University
+**Devvrat Vaishnav** — BSc Data Science Student, Simon Fraser University
 
 Live Website: https://metromobileplans.vercel.app/
