@@ -32,7 +32,7 @@ databases:
   - name: metromobile-db
     databaseName: metromobile
     user: metromobile
-    plan: free            # NOTE: provisioned by this Blueprint but NOT the production
+    plan: 0.1c-256mb            # NOTE: provisioned by this Blueprint but NOT the production
     region: oregon        #       database — production runs on Neon (see header comment).
 
 services:
